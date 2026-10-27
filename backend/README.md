@@ -220,8 +220,13 @@ The backend can be deployed using:
 
 ## Contributors
 
-* Mohamed Youssef Mellouli
-* PIDEV Project Team
+Presented by the Unity Nexus team:
+
+- Mouhamed Ali Abidi  
+- Mohamed Youssef Mellouli  
+- Mohamed Aziz Ayed  
+- Haroun Chebbane  
+- Ghassen Hamdi
 
 ---
 
