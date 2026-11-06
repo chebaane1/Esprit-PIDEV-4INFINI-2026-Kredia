@@ -10,6 +10,7 @@ import com.kredia.service.CreditService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -103,6 +104,7 @@ public class CreditController {
         return new ResponseEntity<>(credits, HttpStatus.OK);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     @PostMapping("/{id}/approve")
     public ResponseEntity<Credit> approveCreditRequest(@PathVariable Long id) {
         try {
@@ -112,6 +114,7 @@ public class CreditController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     @PostMapping("/{id}/reject")
     public ResponseEntity<DemandeCredit> rejectCreditRequest(@PathVariable Long id) {
         try {
@@ -133,6 +136,7 @@ public class CreditController {
         return new ResponseEntity<>(demandes, HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Credit> updateCredit(@PathVariable Long id, @Valid @RequestBody Credit creditDetails) {
         try {
@@ -143,6 +147,7 @@ public class CreditController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCredit(@PathVariable Long id) {
         creditService.deleteCredit(id);

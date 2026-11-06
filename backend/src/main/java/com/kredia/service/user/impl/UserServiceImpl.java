@@ -7,13 +7,16 @@ import com.kredia.repository.user.UserRepository;
 import com.kredia.service.user.UserService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import jakarta.persistence.criteria.Predicate;
 
 @Service
 @Transactional
@@ -58,7 +61,17 @@ public class UserServiceImpl implements UserService {
     public Page<UserResponseDTO> search(Long actorId, Optional<String> email, Optional<UserStatus> status,
                                          Optional<UserRole> role, Optional<Instant> createdFrom,
                                          Optional<Instant> createdTo, Pageable pageable) {
-        return userRepository.findAll(pageable).map(this::toDto);
+        Specification<User> spec = (root, query, cb) -> {
+        List<Predicate> predicates = new ArrayList<>();
+        predicates.add(cb.equal(root.get("deleted"), false));
+        email.ifPresent(value -> predicates.add(cb.like(cb.lower(root.get("email")), "%" + value.toLowerCase() + "%")));
+        status.ifPresent(value -> predicates.add(cb.equal(root.get("status"), value)));
+        role.ifPresent(value -> predicates.add(cb.equal(root.get("role"), value)));
+        createdFrom.ifPresent(value -> predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), value)));
+        createdTo.ifPresent(value -> predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), value)));
+        return cb.and(predicates.toArray(new Predicate[0]));
+    };
+    return userRepository.findAll(spec, pageable).map(this::toDto);
     }
 
     @Override

@@ -12,8 +12,16 @@ export class WalletApi {
     return this.http.get<Wallet[]>(`${API_BASE_URL}/api/wallets`);
   }
 
+  findMine(): Observable<Wallet[]> {
+    return this.http.get<Wallet[]>(`${API_BASE_URL}/api/wallets/me`);
+  }
+
   findByUser(userId: number): Observable<Wallet[]> {
     return this.http.get<Wallet[]>(`${API_BASE_URL}/api/wallets/user/${userId}`);
+  }
+
+  create(userId: number): Observable<Wallet> {
+    return this.http.post<Wallet>(`${API_BASE_URL}/api/wallets`, { user: { userId } });
   }
 
   freeze(id: number): Observable<Wallet> {
@@ -22,5 +30,13 @@ export class WalletApi {
 
   unfreeze(id: number): Observable<Wallet> {
     return this.http.patch<Wallet>(`${API_BASE_URL}/api/wallets/${id}/unfreeze`, {});
+  }
+
+  deposit(id: number, amount: number): Observable<Wallet> {
+    return this.http.post<Wallet>(`${API_BASE_URL}/api/wallets/${id}/deposit`, { amount });
+  }
+
+  withdraw(id: number, amount: number): Observable<Wallet> {
+    return this.http.post<Wallet>(`${API_BASE_URL}/api/wallets/${id}/withdraw`, { amount });
   }
 }

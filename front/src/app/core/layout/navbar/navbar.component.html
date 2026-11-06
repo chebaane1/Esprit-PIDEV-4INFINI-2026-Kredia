@@ -1,5 +1,13 @@
 <header class="topbar">
 
+  <button class="menu-btn" type="button" *ngIf="showMenuButton" (click)="menuToggle.emit()" aria-label="Toggle navigation">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
+
   <!-- Search (hidden on simulator) / Back button (simulator only) -->
   <ng-container *ngIf="!isSimulateurPage; else backBtn">
     <div class="search-bar">

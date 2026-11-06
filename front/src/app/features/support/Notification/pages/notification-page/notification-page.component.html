@@ -1,4 +1,176 @@
-<div class="page-container">
-  <h1>Notification</h1>
-  <p>This is a placeholder for the Notification component.</p>
-</div>
+<app-page-layout
+  eyebrow="Support · Inbox"
+  title="Notifications"
+  accent="Inbox"
+  subtitle="Stay up to date with every alert sent to your account."
+  badgeValue="Inbox"
+  badgeLabel="Portal">
+
+  <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+
+  <div class="stat-grid">
+    <div class="stat-card stat-card--blue">
+      <span class="stat-card__label">Total</span>
+      <span class="stat-card__value">{{ totalElements }}</span>
+    </div>
+    <div class="stat-card stat-card--amber">
+      <span class="stat-card__label">Unread</span>
+      <span class="stat-card__value">{{ unreadTotal }}</span>
+    </div>
+    <div class="stat-card stat-card--green">
+      <span class="stat-card__label">Read on this page</span>
+      <span class="stat-card__value">{{ notifications.length - unreadOnPage }}</span>
+    </div>
+  </div>
+
+  <div class="panel-header ds-header">
+    <div>
+      <h2 class="panel-title">Your notifications</h2>
+      <p class="panel-subtitle">{{ unreadTotal }} unread · newest first.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn--secondary" type="button"
+              (click)="markAllAsRead()" [disabled]="markingAll || unreadTotal === 0">
+        {{ markingAll ? 'Marking…' : 'Mark all as read' }}
+      </button>
+      <button class="btn btn--request" type="button" *ngIf="isAdmin" (click)="toggleCreate()">
+        {{ showCreate ? 'Cancel' : '+ New notification' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar__search">
+      <input class="input" type="search" placeholder="Search title or message…"
+             [(ngModel)]="searchFilter" (keyup.enter)="applyFilters()" />
+    </div>
+    <select class="select" [(ngModel)]="readFilter" (change)="applyFilters()">
+      <option value="">All</option>
+      <option value="unread">Unread only</option>
+      <option value="read">Read only</option>
+    </select>
+    <select class="select" [(ngModel)]="typeFilter" (change)="applyFilters()">
+      <option value="">All channels</option>
+      <option *ngFor="let t of types" [value]="t">{{ t }}</option>
+    </select>
+    <button class="btn btn--primary btn--small" type="button" (click)="applyFilters()">Search</button>
+    <button class="btn btn--secondary btn--small" type="button" (click)="resetFilters()">Reset</button>
+  </div>
+
+  <p class="loading-state" *ngIf="loading && notifications.length === 0">Loading notifications…</p>
+
+  <div class="notification-list">
+    <article class="notification-card"
+             *ngFor="let n of notifications; trackBy: trackByNotificationId"
+             [class.notification-card--unread]="!n.isRead">
+      <div class="notification-card__icon">{{ typeIcon(n.type) }}</div>
+      <div class="notification-card__body">
+        <div class="notification-card__head">
+          <h3 class="notification-card__title">{{ n.title }}</h3>
+          <span [class]="'badge ' + getStatusClass(n.isRead)">{{ n.isRead ? 'READ' : 'UNREAD' }}</span>
+          <span class="badge">{{ n.type }}</span>
+        </div>
+        <p class="notification-card__message">{{ n.message }}</p>
+        <div class="notification-card__meta">
+          <span>{{ n.sentAt ? (n.sentAt | date:'medium') : '—' }}</span>
+          <span *ngIf="n.reclamationId">· Reclamation #{{ n.reclamationId }}</span>
+        </div>
+      </div>
+      <div class="notification-card__actions">
+        <button class="btn btn--small btn--details" type="button" (click)="openDetails(n)">Open</button>
+        <button class="btn btn--small btn--approve" type="button" *ngIf="!n.isRead" (click)="markAsRead(n)">
+          Mark read
+        </button>
+        <button class="btn btn--small btn--danger" type="button" *ngIf="isAdmin" (click)="delete(n)">
+          Delete
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <div class="empty-state" *ngIf="notifications.length === 0 && !loading">
+    <h3>Inbox is clear</h3>
+    <p>No notification matches the current filters.</p>
+  </div>
+
+  <app-pagination
+    [page]="page"
+    [totalPages]="totalPages"
+    [totalElements]="totalElements"
+    (previous)="prevPage()"
+    (next)="nextPage()">
+  </app-pagination>
+
+  <!-- ═══ Create notification modal (admin) ═══ -->
+  <div class="modal-overlay" *ngIf="showCreate && isAdmin" (click)="toggleCreate()">
+    <div class="modal-box modal-box--lg" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>New notification</h2>
+        <button class="modal-close" type="button" (click)="toggleCreate()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field">
+            <label>Recipient user ID</label>
+            <input type="number" min="1" [(ngModel)]="createForm.userId" />
+          </div>
+          <div class="field">
+            <label>Channel</label>
+            <select [(ngModel)]="createForm.type">
+              <option *ngFor="let t of types" [value]="t">{{ t }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Related reclamation (optional)</label>
+            <input type="number" min="1" placeholder="e.g. 42" [(ngModel)]="createForm.reclamationId" />
+          </div>
+          <div class="field field--full">
+            <label>Title</label>
+            <input type="text" maxlength="150" [(ngModel)]="createForm.title" />
+          </div>
+          <div class="field field--full">
+            <label>Message</label>
+            <textarea rows="4" [(ngModel)]="createForm.message"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="toggleCreate()">Cancel</button>
+        <button class="btn btn--primary" type="button" (click)="create()" [disabled]="creating">
+          {{ creating ? 'Sending…' : 'Send notification' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Notification details ═══ -->
+  <div class="modal-overlay" *ngIf="detailsNotification" (click)="closeDetails()">
+    <div class="modal-box" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ detailsNotification.title }}</h2>
+        <button class="modal-close" type="button" (click)="closeDetails()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <dl class="detail-grid">
+          <div class="detail-item"><dt>Channel</dt><dd>{{ detailsNotification.type }}</dd></div>
+          <div class="detail-item"><dt>Status</dt>
+            <dd><span [class]="'badge ' + getStatusClass(detailsNotification.isRead)">{{ detailsNotification.isRead ? 'READ' : 'UNREAD' }}</span></dd>
+          </div>
+          <div class="detail-item"><dt>Sent at</dt>
+            <dd>{{ detailsNotification.sentAt ? (detailsNotification.sentAt | date:'medium') : '—' }}</dd>
+          </div>
+          <div class="detail-item"><dt>Reclamation</dt>
+            <dd>{{ detailsNotification.reclamationId ? ('#' + detailsNotification.reclamationId) : '—' }}</dd>
+          </div>
+          <div class="detail-item detail-item--full"><dt>Message</dt><dd>{{ detailsNotification.message }}</dd></div>
+        </dl>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="closeDetails()">Close</button>
+        <button class="btn btn--danger" type="button" *ngIf="isAdmin"
+                (click)="delete(detailsNotification!)">Delete</button>
+      </div>
+    </div>
+  </div>
+
+</app-page-layout>

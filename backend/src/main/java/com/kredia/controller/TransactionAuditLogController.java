@@ -11,6 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/audit-logs")
+@org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
 public class TransactionAuditLogController {
 
     private final TransactionAuditLogService auditLogService;

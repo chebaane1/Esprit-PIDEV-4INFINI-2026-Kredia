@@ -6,7 +6,7 @@
     </div>
 
     <div class="actions-group">
-      <button class="page-action-btn" type="button" (click)="showCreateForm()">Add</button>
+      <button class="page-action-btn" type="button" *ngIf="isAdmin" (click)="showCreateForm()">Add</button>
       <button class="page-action-btn" type="button" (click)="loadAssets()">Refresh</button>
     </div>
   </header>
@@ -38,7 +38,7 @@
   </section>
 
   <section class="panel">
-    <div *ngIf="formVisible" class="asset-form">
+    <div *ngIf="formVisible && isAdmin" class="asset-form">
       <h3>{{ isEditing ? 'Edit asset' : 'New asset' }}</h3>
       <div class="form-grid">
         <div class="field">
@@ -67,8 +67,8 @@
       </div>
 
       <div class="form-actions">
-        <button class="btn" type="button" (click)="saveAsset()">Save</button>
-        <button class="btn btn--muted" type="button" (click)="cancelForm()">Cancel</button>
+        <button class="btn btn--request" type="button" (click)="saveAsset()">Save</button>
+        <button class="btn btn--secondary" type="button" (click)="cancelForm()">Cancel</button>
       </div>
     </div>
 
@@ -131,8 +131,10 @@
             <td><span [class]="getRiskBadgeClass(asset.riskLevel)">{{ asset.riskLevel }}</span></td>
             <td>{{ asset.createdAt ? (asset.createdAt | date:'short') : '-' }}</td>
             <td>
-              <button class="btn btn--small" type="button" (click)="showEditForm(asset)">Edit</button>
-              <button class="btn btn--small btn--danger" type="button" (click)="deleteAsset(asset)">Delete</button>
+              <ng-container *ngIf="isAdmin">
+                <button class="btn btn--small" type="button" (click)="showEditForm(asset)">Edit</button>
+                <button class="btn btn--small btn--danger" type="button" (click)="deleteAsset(asset)">Delete</button>
+              </ng-container>
             </td>
           </tr>
         </tbody>

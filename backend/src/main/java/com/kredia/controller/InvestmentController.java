@@ -13,6 +13,7 @@ import com.kredia.service.MarketPriceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,6 +34,7 @@ public class InvestmentController {
 
     // ==================== InvestmentAsset Endpoints ====================
     
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/assets")
     public ResponseEntity<InvestmentAsset> createAsset(@RequestBody InvestmentAsset asset) {
         // Set default values if not provided
@@ -70,6 +72,7 @@ public class InvestmentController {
                 .orElse(ResponseEntity.ok(Map.of("exists", false)));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/assets/{id}")
     public ResponseEntity<InvestmentAsset> updateAsset(@PathVariable Long id, @RequestBody InvestmentAsset assetDetails) {
         try {
@@ -80,6 +83,7 @@ public class InvestmentController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/assets/{id}")
     public ResponseEntity<Void> deleteAsset(@PathVariable Long id) {
         try {

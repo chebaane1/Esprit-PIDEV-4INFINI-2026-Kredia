@@ -7,11 +7,7 @@ import { ReclamationHistory } from '../models/reclamation-history.model';
 export class ReclamationHistoryVm {
   private readonly api = inject(ReclamationHistoryApi);
 
-  findAll(): Observable<ReclamationHistory[]> {
-    return this.api.findAll();
-  }
-
-  findByReclamation(reclamationId: number): Observable<ReclamationHistory[]> {
-    return this.api.findByReclamation(reclamationId);
+  getByReclamation(reclamationId: number): Observable<ReclamationHistory[]> {
+    return this.api.getByReclamation(reclamationId);
   }
 }

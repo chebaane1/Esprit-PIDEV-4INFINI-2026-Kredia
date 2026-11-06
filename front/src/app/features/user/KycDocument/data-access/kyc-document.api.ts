@@ -1,26 +1,50 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../../../core/http/api.config';
-import { KycDocument } from '../models/kyc-document.model';
+import { AuthService } from '../../../../core/services/auth.service';
+import { KycDocument, KycStatus, ApiResponse } from '../models/kyc-document.model';
 
 @Injectable({ providedIn: 'root' })
 export class KycDocumentApi {
-  constructor(private readonly http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
 
-  findAll(): Observable<KycDocument[]> {
-    return this.http.get<KycDocument[]>(`${API_BASE_URL}/api/kyc-documents`);
+  private actorHeaders(): Record<string, string> {
+    const id = this.auth.getCurrentUserId();
+    return id ? { 'X-Actor-Id': String(id) } : {};
   }
 
-  findByUser(userId: number): Observable<KycDocument[]> {
-    return this.http.get<KycDocument[]>(`${API_BASE_URL}/api/kyc-documents/user/${userId}`);
+  getMyDocuments(): Observable<ApiResponse<KycDocument[]>> {
+    return this.http.get<ApiResponse<KycDocument[]>>(
+      `${API_BASE_URL}/api/user/kyc`,
+      { headers: this.actorHeaders() }
+    );
   }
 
-  approve(id: number): Observable<KycDocument> {
-    return this.http.patch<KycDocument>(`${API_BASE_URL}/api/kyc-documents/${id}/approve`, {});
+  getDocumentsByUser(userId: number): Observable<ApiResponse<KycDocument[]>> {
+    return this.http.get<ApiResponse<KycDocument[]>>(
+      `${API_BASE_URL}/api/user/kyc/user/${userId}`,
+      { headers: this.actorHeaders() }
+    );
   }
 
-  reject(id: number): Observable<KycDocument> {
-    return this.http.patch<KycDocument>(`${API_BASE_URL}/api/kyc-documents/${id}/reject`, {});
+  upload(file: File, type: string): Observable<ApiResponse<KycDocument>> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+    return this.http.post<ApiResponse<KycDocument>>(
+      `${API_BASE_URL}/api/user/kyc/upload`,
+      formData,
+      { headers: this.actorHeaders() }
+    );
+  }
+
+  verify(docId: number, status: KycStatus): Observable<ApiResponse<KycDocument>> {
+    return this.http.patch<ApiResponse<KycDocument>>(
+      `${API_BASE_URL}/api/user/kyc/${docId}/verify?status=${status}`,
+      {},
+      { headers: this.actorHeaders() }
+    );
   }
 }

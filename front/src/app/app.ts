@@ -1,12 +1,13 @@
 import { Component, inject, effect } from '@angular/core';
 import { ShellComponent } from './core/layout/shell/shell.component';
 import { ToastContainerComponent } from './core/layout/toast-container/toast-container.component';
+import { ConfirmDialogComponent } from './shared/ui/confirm-dialog/confirm-dialog.component';
 import { DarkModeService } from './core/services/dark-mode.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [ShellComponent, ToastContainerComponent],
+  imports: [ShellComponent, ToastContainerComponent, ConfirmDialogComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

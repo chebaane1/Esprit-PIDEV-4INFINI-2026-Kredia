@@ -1,4 +1,278 @@
-<div class="page-container">
-  <h1>Reclamation</h1>
-  <p>This is a placeholder for the Reclamation component.</p>
-</div>
+<app-page-layout
+  eyebrow="Support"
+  title="Reclamations"
+  accent="Management"
+  [subtitle]="isAdminOrAgent
+    ? 'Manage customer complaints, priorities and SLA compliance.'
+    : 'Create a request and follow how our support team handles it.'"
+  badgeValue="Support"
+  badgeLabel="Portal">
+
+  <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+
+  <div class="stat-grid" *ngIf="isAdminOrAgent && dashboard; else clientStats">
+    <div class="stat-card stat-card--blue">
+      <span class="stat-card__label">Total requests</span>
+      <span class="stat-card__value">{{ dashboard.totalReclamations }}</span>
+    </div>
+    <div class="stat-card stat-card--amber">
+      <span class="stat-card__label">Open</span>
+      <span class="stat-card__value">{{ dashboard.openReclamations }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card__label">In progress</span>
+      <span class="stat-card__value">{{ dashboard.inProgressReclamations }}</span>
+    </div>
+    <div class="stat-card stat-card--green">
+      <span class="stat-card__label">Resolution rate</span>
+      <span class="stat-card__value">{{ dashboard.resolutionRate | number:'1.0-1' }}%</span>
+    </div>
+  </div>
+
+  <ng-template #clientStats>
+    <div class="stat-grid">
+      <div class="stat-card stat-card--blue">
+        <span class="stat-card__label">My requests</span>
+        <span class="stat-card__value">{{ totalElements }}</span>
+      </div>
+      <div class="stat-card stat-card--amber">
+        <span class="stat-card__label">Open on this page</span>
+        <span class="stat-card__value">{{ openOnPage }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__label">Escalated on this page</span>
+        <span class="stat-card__value">{{ escalatedOnPage }}</span>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="panel-header ds-header">
+    <div>
+      <h2 class="panel-title">{{ isAdminOrAgent ? 'All reclamations' : 'My reclamations' }}</h2>
+      <p class="panel-subtitle">{{ totalElements }} request(s) · filter by status, category or subject.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn--request" type="button" (click)="toggleCreate()">
+        {{ showCreate ? 'Cancel' : '+ New reclamation' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar__search">
+      <input class="input" type="search" placeholder="Search subject or description…"
+             [(ngModel)]="subjectFilter" (keyup.enter)="applyFilters()" />
+    </div>
+    <select class="select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+      <option value="">All statuses</option>
+      <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+    </select>
+    <select class="select" [(ngModel)]="categoryFilter" (change)="applyFilters()">
+      <option value="">All categories</option>
+      <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+    </select>
+    <button class="btn btn--primary btn--small" type="button" (click)="applyFilters()">Search</button>
+    <button class="btn btn--secondary btn--small" type="button" (click)="resetFilters()">Reset</button>
+  </div>
+
+  <p class="loading-state" *ngIf="loading && reclamations.length === 0">Loading reclamations…</p>
+
+  <div class="table-container">
+    <table class="credit-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Subject</th>
+          <th>Category</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Risk</th>
+          <th>SLA</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let r of reclamations; trackBy: trackByReclamationId">
+          <td class="cell-id">#{{ r.reclamationId }}</td>
+          <td>
+            <span class="cell-name">{{ r.subject }}</span>
+            <span class="cell-client">User #{{ r.userId }}</span>
+          </td>
+          <td><span class="badge">{{ r.category }}</span></td>
+          <td><span [class]="'badge ' + getPriorityClass(r.priority)">{{ r.priority }}</span></td>
+          <td><span [class]="'badge ' + getStatusClass(r.status || '')">{{ r.status }}</span></td>
+          <td>
+            <span [class]="'badge ' + getRiskClass(r.riskLevel)" *ngIf="r.riskLevel">{{ r.riskLevel }}</span>
+            <span class="cell-client" *ngIf="r.riskScore != null"> · {{ r.riskScore | number:'1.0-0' }}</span>
+          </td>
+          <td>
+            <span class="badge status--failed" *ngIf="r.slaBreached">Breached</span>
+            <span class="badge status--active" *ngIf="!r.slaBreached">On track</span>
+          </td>
+          <td>{{ r.createdAt ? (r.createdAt | date:'short') : '—' }}</td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn--small btn--details" type="button" (click)="openDetails(r)">Details</button>
+              <select class="select status-select" *ngIf="isAdminOrAgent" [value]="r.status || ''"
+                      (change)="updateStatus(r, $any($event.target).value, $any($event.target))"
+                      aria-label="Change status">
+                <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="table-empty" *ngIf="reclamations.length === 0 && !loading">No reclamations match the current filters.</p>
+  </div>
+
+  <app-pagination
+    [page]="page"
+    [totalPages]="totalPages"
+    [totalElements]="totalElements"
+    (previous)="prevPage()"
+    (next)="nextPage()">
+  </app-pagination>
+
+  <!-- ═══ Create reclamation modal ═══ -->
+  <div class="modal-overlay" *ngIf="showCreate" (click)="toggleCreate()">
+    <div class="modal-box modal-box--lg" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>New reclamation</h2>
+        <button class="modal-close" type="button" (click)="toggleCreate()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field">
+            <label>User ID</label>
+            <input type="number" [(ngModel)]="createForm.userId" [readonly]="!isAdminOrAgent" />
+            <small *ngIf="!isAdminOrAgent">Your own account is used automatically.</small>
+          </div>
+          <div class="field">
+            <label>Priority</label>
+            <select [(ngModel)]="createForm.priority">
+              <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <select [(ngModel)]="createForm.category">
+              <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+            </select>
+          </div>
+          <div class="field field--full">
+            <label>Subject</label>
+            <input type="text" maxlength="150" placeholder="Short summary of your request"
+                   [(ngModel)]="createForm.subject" />
+          </div>
+          <div class="field field--full">
+            <label>Description</label>
+            <textarea rows="5" placeholder="Describe your issue with as much detail as possible…"
+                      [(ngModel)]="createForm.description"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="toggleCreate()">Cancel</button>
+        <button class="btn btn--primary" type="button" (click)="create()" [disabled]="creating">
+          {{ creating ? 'Submitting…' : 'Submit reclamation' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Reclamation details modal ═══ -->
+  <div class="modal-overlay" *ngIf="detailsReclamation" (click)="closeDetails()">
+    <div class="modal-box modal-box--lg" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Reclamation #{{ detailsReclamation.reclamationId }}</h2>
+        <button class="modal-close" type="button" (click)="closeDetails()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <h3 class="modal-section__title">{{ detailsReclamation.subject }}</h3>
+
+        <dl class="detail-grid">
+          <div class="detail-item"><dt>Status</dt>
+            <dd><span [class]="'badge ' + getStatusClass(detailsReclamation.status || '')">{{ detailsReclamation.status }}</span></dd>
+          </div>
+          <div class="detail-item"><dt>Priority</dt>
+            <dd><span [class]="'badge ' + getPriorityClass(detailsReclamation.priority)">{{ detailsReclamation.priority }}</span></dd>
+          </div>
+          <div class="detail-item"><dt>Category</dt><dd>{{ detailsReclamation.category }}</dd></div>
+          <div class="detail-item"><dt>User</dt><dd>#{{ detailsReclamation.userId }}</dd></div>
+          <div class="detail-item"><dt>Assigned to</dt>
+            <dd>{{ detailsReclamation.assignedTo ? ('#' + detailsReclamation.assignedTo) : 'Unassigned' }}</dd>
+          </div>
+          <div class="detail-item"><dt>Risk</dt>
+            <dd>
+              <span [class]="'badge ' + getRiskClass(detailsReclamation.riskLevel)" *ngIf="detailsReclamation.riskLevel">
+                {{ detailsReclamation.riskLevel }}
+              </span>
+              <span class="cell-client" *ngIf="detailsReclamation.riskScore != null"> · score {{ detailsReclamation.riskScore | number:'1.0-0' }}</span>
+            </dd>
+          </div>
+          <div class="detail-item"><dt>Duplicates</dt><dd>{{ detailsReclamation.duplicateCount ?? 0 }}</dd></div>
+          <div class="detail-item"><dt>SLA</dt>
+            <dd>
+              <span class="badge status--failed" *ngIf="detailsReclamation.slaBreached">Breached</span>
+              <span class="badge status--active" *ngIf="!detailsReclamation.slaBreached">On track</span>
+            </dd>
+          </div>
+          <div class="detail-item"><dt>Created</dt>
+            <dd>{{ detailsReclamation.createdAt ? (detailsReclamation.createdAt | date:'medium') : '—' }}</dd>
+          </div>
+          <div class="detail-item"><dt>Last activity</dt>
+            <dd>{{ detailsReclamation.lastActivityAt ? (detailsReclamation.lastActivityAt | date:'medium') : '—' }}</dd>
+          </div>
+          <div class="detail-item"><dt>First response due</dt>
+            <dd>{{ detailsReclamation.firstResponseDueAt ? (detailsReclamation.firstResponseDueAt | date:'medium') : '—' }}</dd>
+          </div>
+          <div class="detail-item"><dt>Resolution due</dt>
+            <dd>{{ detailsReclamation.resolutionDueAt ? (detailsReclamation.resolutionDueAt | date:'medium') : '—' }}</dd>
+          </div>
+          <div class="detail-item"><dt>Resolved at</dt>
+            <dd>{{ detailsReclamation.resolvedAt ? (detailsReclamation.resolvedAt | date:'medium') : '—' }}</dd>
+          </div>
+          <div class="detail-item"><dt>Satisfaction</dt>
+            <dd>{{ detailsReclamation.customerSatisfactionScore != null ? (detailsReclamation.customerSatisfactionScore + '/5') : '—' }}</dd>
+          </div>
+          <div class="detail-item detail-item--full"><dt>Description</dt><dd>{{ detailsReclamation.description }}</dd></div>
+          <div class="detail-item detail-item--full" *ngIf="detailsReclamation.customerFeedback">
+            <dt>Customer feedback</dt><dd>{{ detailsReclamation.customerFeedback }}</dd>
+          </div>
+        </dl>
+
+        <div class="modal-section" *ngIf="isAdminOrAgent">
+          <h4 class="modal-section__title">Manage</h4>
+          <div class="form-grid">
+            <div class="field">
+              <label>Status</label>
+              <select [value]="detailsReclamation.status || ''"
+                      (change)="updateStatus(detailsReclamation!, $any($event.target).value, $any($event.target))">
+                <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Assign to user ID</label>
+              <div class="field-row">
+                <input type="number" min="1" placeholder="Agent user ID" [(ngModel)]="assignTargetId" />
+                <button class="btn btn--primary btn--small" type="button"
+                        (click)="assign()" [disabled]="assigning || !assignTargetId">
+                  {{ assigning ? 'Assigning…' : 'Assign' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--ghost" type="button" (click)="openRelated(detailsReclamation, 'history')">History</button>
+        <button class="btn btn--ghost" type="button" (click)="openRelated(detailsReclamation, 'attachments')">Attachments</button>
+        <button class="btn btn--primary" type="button" (click)="openRelated(detailsReclamation, 'messages')">Open messages</button>
+        <button class="btn btn--secondary" type="button" (click)="closeDetails()">Close</button>
+      </div>
+    </div>
+  </div>
+
+</app-page-layout>

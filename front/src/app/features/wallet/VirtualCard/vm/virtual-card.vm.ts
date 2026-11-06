@@ -7,19 +7,11 @@ import { VirtualCard } from '../models/virtual-card.model';
 export class VirtualCardVm {
   private readonly api = inject(VirtualCardApi);
 
-  findAll(): Observable<VirtualCard[]> {
-    return this.api.findAll();
+  listByWallet(walletId: number): Observable<VirtualCard[]> {
+    return this.api.listByWallet(walletId);
   }
 
-  findByUser(userId: number): Observable<VirtualCard[]> {
-    return this.api.findByUser(userId);
-  }
-
-  block(id: number): Observable<VirtualCard> {
-    return this.api.block(id);
-  }
-
-  unblock(id: number): Observable<VirtualCard> {
-    return this.api.unblock(id);
+  generate(walletId: number): Observable<VirtualCard> {
+    return this.api.generate(walletId);
   }
 }

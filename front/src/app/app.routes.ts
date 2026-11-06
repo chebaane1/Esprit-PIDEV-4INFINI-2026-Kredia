@@ -1,8 +1,9 @@
 import { Routes } from '@angular/router';
 import { HomeComponent } from './pages/home/home.component';
 import { LoginComponent } from './pages/login/login.component';
+import { RegisterComponent } from './pages/register/register.component';
 import { PublicSimulateurComponent } from './pages/public-simulateur/public-simulateur.component';
-import { authGuard, authChildGuard } from './core/guards/auth.guard';
+import { authGuard, authChildGuard, adminGuard, agentGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
 
@@ -10,6 +11,7 @@ export const routes: Routes = [
   { path: '',           component: HomeComponent, pathMatch: 'full' },
   { path: 'home',       component: HomeComponent },
   { path: 'login',      component: LoginComponent },
+  { path: 'register',   component: RegisterComponent },
   { path: 'simulateur', component: PublicSimulateurComponent },
 
 
@@ -23,13 +25,13 @@ export const routes: Routes = [
   // ── User ───────────────────────────────────────────────
   {
     path: 'user',
-    canActivate: [authGuard],
-    canActivateChild: [authGuard],
+    canActivate: [agentGuard],
+    canActivateChild: [agentGuard],
     loadChildren: () => import('./features/user/User/user.routes').then(m => m.routes)
   },
   {
     path: 'user/kyc-doc',
-    canActivate: [authGuard],
+    canActivate: [agentGuard],
     loadChildren: () => import('./features/user/KycDocument/kyc-document.routes').then(m => m.routes)
   },
 
@@ -47,12 +49,12 @@ export const routes: Routes = [
   },
   {
     path: 'wallet/audit',
-    canActivate: [authGuard],
+    canActivate: [adminGuard],
     loadChildren: () => import('./features/wallet/TransactionAuditLog/transaction-audit-log.routes').then(m => m.routes)
   },
   {
     path: 'wallet/loan-transactions',
-    canActivate: [authGuard],
+    canActivate: [adminGuard],
     loadChildren: () => import('./features/wallet/TransactionLoan/transaction-loan.routes').then(m => m.routes)
   },
   {

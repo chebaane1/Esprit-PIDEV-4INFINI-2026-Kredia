@@ -44,6 +44,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(error("Missing multipart part: " + ex.getRequestPartName(), 400));
     }
 
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<?> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error(ex.getMessage(), 403));
+    }
+
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<?> handleUnauthenticated(org.springframework.security.core.AuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error(ex.getMessage(), 401));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleOther(Exception ex) {
         return ResponseEntity.status(500).body(error("Internal Server Error: " + ex.getMessage(), 500));

@@ -1,25 +1,25 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { KycDocumentApi } from '../data-access/kyc-document.api';
-import { KycDocument } from '../models/kyc-document.model';
+import { KycDocument, KycStatus, ApiResponse } from '../models/kyc-document.model';
 
 @Injectable({ providedIn: 'root' })
 export class KycDocumentVm {
   private readonly api = inject(KycDocumentApi);
 
-  findAll(): Observable<KycDocument[]> {
-    return this.api.findAll();
+  getMyDocuments(): Observable<ApiResponse<KycDocument[]>> {
+    return this.api.getMyDocuments();
   }
 
-  findByUser(userId: number): Observable<KycDocument[]> {
-    return this.api.findByUser(userId);
+  getDocumentsByUser(userId: number): Observable<ApiResponse<KycDocument[]>> {
+    return this.api.getDocumentsByUser(userId);
   }
 
-  approve(id: number): Observable<KycDocument> {
-    return this.api.approve(id);
+  upload(file: File, type: string): Observable<ApiResponse<KycDocument>> {
+    return this.api.upload(file, type);
   }
 
-  reject(id: number): Observable<KycDocument> {
-    return this.api.reject(id);
+  verify(docId: number, status: KycStatus): Observable<ApiResponse<KycDocument>> {
+    return this.api.verify(docId, status);
   }
 }

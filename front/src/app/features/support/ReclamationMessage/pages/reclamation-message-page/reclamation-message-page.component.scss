@@ -1,3 +1,139 @@
-.page-container {
-  padding: 2rem;
+:host {
+  display: block;
+}
+
+.field--inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-direction: row;
+
+  label {
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .input {
+    min-width: 140px;
+  }
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .88rem;
+  color: #475569;
+  cursor: pointer;
+
+  input {
+    width: 16px;
+    height: 16px;
+    accent-color: #00b26b;
+  }
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+
+  &__thread {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+    max-height: 480px;
+    min-height: 220px;
+    overflow-y: auto;
+    background: #f8fafc;
+  }
+
+  &__composer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 16px;
+    border-top: 1px solid #e2e8f0;
+    background: #fff;
+
+    .textarea {
+      min-height: 84px;
+      resize: vertical;
+    }
+  }
+
+  &__composer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    .select {
+      width: auto;
+      min-width: 180px;
+    }
+  }
+}
+
+.chat-message {
+  max-width: 78%;
+  padding: 12px 14px;
+  border-radius: 14px 14px 14px 4px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+
+  &--own {
+    align-self: flex-end;
+    border-radius: 14px 14px 4px 14px;
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+    font-size: .74rem;
+    color: #64748b;
+  }
+
+  &__author {
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  &__time {
+    margin-left: auto;
+    font-size: .72rem;
+    color: #94a3b8;
+  }
+
+  &__body {
+    margin: 0;
+    font-size: .92rem;
+    line-height: 1.55;
+    color: #1e293b;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+@media (max-width: 700px) {
+  .chat-message {
+    max-width: 92%;
+  }
+
+  .chat__thread {
+    max-height: 60vh;
+    padding: 14px;
+  }
 }

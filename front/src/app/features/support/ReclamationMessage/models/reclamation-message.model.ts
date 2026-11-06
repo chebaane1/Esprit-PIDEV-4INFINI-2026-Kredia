@@ -1,10 +1,16 @@
-export type SenderType = 'CLIENT' | 'AGENT' | 'SYSTEM';
+export type MessageVisibility = 'CUSTOMER' | 'INTERNAL';
 
 export interface ReclamationMessage {
   messageId?: number;
-  reclamationId: number;
-  senderType: SenderType;
-  senderName: string;
-  content: string;
-  sentAt?: string;
+  reclamationId?: number;
+  authorUserId: number;
+  visibility: MessageVisibility;
+  message: string;
+  createdAt?: string;
+}
+
+export interface ReclamationMessageCreateRequest {
+  authorUserId: number;
+  visibility: MessageVisibility;
+  message: string;
 }

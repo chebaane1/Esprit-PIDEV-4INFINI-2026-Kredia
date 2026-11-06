@@ -10,7 +10,8 @@
       2-minute onboarding, immediate disbursement.
     </p>
     <div class="cta">
-      <button class="btn primary">Apply for a loan</button>
+      <button class="btn btn--request">Apply for a loan</button>
+      <a routerLink="/register" class="btn sim-cta">Create account</a>
       <a routerLink="/simulateur" class="btn sim-cta">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -177,10 +178,88 @@
   </div>
 </section>
 
+<section class="modules">
+  <div class="section-header">
+    <h2>Quick access</h2>
+    <p>Jump to your modules.</p>
+  </div>
+  <div class="module-grid">
+    <a routerLink="/credit/list" class="module-card">
+      <span>📋</span>
+      <h3>Credit</h3>
+      <p>Manage credits and installments</p>
+    </a>
+    <a routerLink="/simulateur" class="module-card">
+      <span>🧮</span>
+      <h3>Simulator</h3>
+      <p>Simulate your loan</p>
+    </a>
+    <ng-container *ngIf="auth.isAdminOrAgent()">
+      <a routerLink="/user" class="module-card">
+        <span>👤</span>
+        <h3>Users</h3>
+        <p>User management</p>
+      </a>
+      <a routerLink="/wallet" class="module-card">
+        <span>💳</span>
+        <h3>Wallet</h3>
+        <p>Wallets and transactions</p>
+      </a>
+      <a routerLink="/support/reclamations" class="module-card">
+        <span>💬</span>
+        <h3>Support</h3>
+        <p>Reclamations and messages</p>
+      </a>
+      <a routerLink="/investissement/chart" class="module-card">
+        <span>📈</span>
+        <h3>Investment</h3>
+        <p>Portfolio and strategies</p>
+      </a>
+    </ng-container>
+    <ng-container *ngIf="auth.isClient()">
+      <a routerLink="/credit/list" class="module-card">
+        <span>💳</span>
+        <h3>My Credits</h3>
+        <p>View your credits</p>
+      </a>
+      <a routerLink="/wallet" class="module-card">
+        <span>👛</span>
+        <h3>My Wallet</h3>
+        <p>Balance and transfers</p>
+      </a>
+      <a routerLink="/wallet/transactions" class="module-card">
+        <span>🔁</span>
+        <h3>Transactions</h3>
+        <p>Deposits, transfers, echeances</p>
+      </a>
+      <a routerLink="/wallet/virtual-card" class="module-card">
+        <span>💳</span>
+        <h3>Virtual Card</h3>
+        <p>Manage your virtual card</p>
+      </a>
+      <a routerLink="/support/reclamations" class="module-card">
+        <span>💬</span>
+        <h3>My Reclamations</h3>
+        <p>Create and track</p>
+      </a>
+      <a routerLink="/support/reclamation-messages" class="module-card">
+        <span>✉️</span>
+        <h3>Support Messages</h3>
+        <p>Chat with the support team</p>
+      </a>
+      <a routerLink="/support/notifications" class="module-card">
+        <span>🔔</span>
+        <h3>Notifications</h3>
+        <p>Status updates and replies</p>
+      </a>
+    </ng-container>
+  </div>
+</section>
+
 <section id="coach" class="cta-band">
   <div>
     <h2>Your AI credit partner</h2>
     <p>Stay in control with smart notifications and personalized coaching.</p>
   </div>
-  <button class="btn primary">Talk to the AI Coach</button>
+  <button class="btn btn--request">Talk to the AI Coach</button>
 </section>

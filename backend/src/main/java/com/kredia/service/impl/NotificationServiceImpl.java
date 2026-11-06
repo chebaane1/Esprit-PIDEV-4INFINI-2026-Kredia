@@ -3,6 +3,7 @@ package com.kredia.service.impl;
 import com.kredia.dto.notification.NotificationCreateRequest;
 import com.kredia.dto.notification.NotificationResponse;
 import com.kredia.entity.support.Notification;
+import com.kredia.enums.NotificationType;
 import com.kredia.exception.NotFoundException;
 import com.kredia.repository.NotificationRepository;
 import com.kredia.service.NotificationService;
@@ -37,13 +38,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<NotificationResponse> getByUser(Long userId, Boolean isRead, int page, int size) {
+    public Page<NotificationResponse> getByUser(Long userId, Boolean isRead, NotificationType type, String query, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("sentAt").descending());
-
-        if (isRead == null) {
-            return notificationRepository.findByUserId(userId, pageable).map(this::toResponse);
-        }
-        return notificationRepository.findByUserIdAndIsRead(userId, isRead, pageable).map(this::toResponse);
+        String normalized = (query == null || query.isBlank()) ? null : "%" + query.trim().toLowerCase() + "%";
+        return notificationRepository.search(userId, isRead, type, normalized, pageable).map(this::toResponse);
     }
 
     @Override

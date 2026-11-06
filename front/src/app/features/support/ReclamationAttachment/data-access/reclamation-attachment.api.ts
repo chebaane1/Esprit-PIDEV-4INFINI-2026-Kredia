@@ -1,22 +1,33 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_BASE_URL } from '../../../../core/http/api.config';
+import { AuthService } from '../../../../core/services/auth.service';
 import { ReclamationAttachment } from '../models/reclamation-attachment.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReclamationAttachmentApi {
-  constructor(private readonly http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
 
-  findAll(): Observable<ReclamationAttachment[]> {
-    return this.http.get<ReclamationAttachment[]>(`${API_BASE_URL}/api/reclamation-attachments`);
+  private actorId(): number | null {
+    return this.auth.getCurrentUserId();
   }
 
-  findByReclamation(reclamationId: number): Observable<ReclamationAttachment[]> {
-    return this.http.get<ReclamationAttachment[]>(`${API_BASE_URL}/api/reclamation-attachments/reclamation/${reclamationId}`);
+  getByReclamation(reclamationId: number): Observable<ReclamationAttachment[]> {
+    return this.http.get<ReclamationAttachment[]>(
+      `${API_BASE_URL}/api/reclamations/${reclamationId}/attachments`
+    );
   }
 
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${API_BASE_URL}/api/reclamation-attachments/${id}`);
+  upload(reclamationId: number, file: File): Observable<ReclamationAttachment> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const userId = this.actorId();
+    const params = userId ? `?uploadedByUserId=${userId}` : '';
+    return this.http.post<ReclamationAttachment>(
+      `${API_BASE_URL}/api/reclamations/${reclamationId}/attachments${params}`,
+      formData
+    );
   }
 }

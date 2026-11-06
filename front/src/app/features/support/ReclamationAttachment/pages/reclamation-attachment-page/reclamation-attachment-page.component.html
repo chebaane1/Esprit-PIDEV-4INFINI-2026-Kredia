@@ -1,4 +1,118 @@
-<div class="page-container">
-  <h1>Reclamation Attachment</h1>
-  <p>This is a placeholder for the Reclamation Attachment component.</p>
-</div>
+<app-page-layout
+  eyebrow="Support · Files"
+  title="Attachments"
+  accent="Evidence"
+  subtitle="Upload and review the documents attached to a reclamation."
+  badgeValue="Files"
+  badgeLabel="Portal">
+
+  <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+
+  <div class="stat-grid">
+    <div class="stat-card stat-card--blue">
+      <span class="stat-card__label">Files</span>
+      <span class="stat-card__value">{{ filteredAttachments.length }}</span>
+    </div>
+    <div class="stat-card stat-card--green">
+      <span class="stat-card__label">Total size</span>
+      <span class="stat-card__value stat-card__value--small">{{ formatSize(totalSize) }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card__label">Reclamation</span>
+      <span class="stat-card__value stat-card__value--small">{{ reclamationId ? ('#' + reclamationId) : 'None' }}</span>
+    </div>
+  </div>
+
+  <div class="panel-header ds-header">
+    <div>
+      <h2 class="panel-title">Reclamation files</h2>
+      <p class="panel-subtitle">Open a reclamation thread, then upload or download its evidence.</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="field field--inline">
+      <label for="attachmentReclamationId">Reclamation</label>
+      <input id="attachmentReclamationId" class="input" type="number" min="1" placeholder="e.g. 42"
+             [(ngModel)]="reclamationId" (keyup.enter)="loadAttachments()" />
+    </div>
+    <div class="toolbar__search">
+      <input class="input" type="search" placeholder="Search file name or type…"
+             [(ngModel)]="searchFilter" (keyup.enter)="applyFilters()" />
+    </div>
+    <button class="btn btn--primary btn--small" type="button" (click)="loadAttachments()" [disabled]="loading">
+      {{ loading ? 'Loading…' : 'Load files' }}
+    </button>
+    <button class="btn btn--secondary btn--small" type="button" (click)="resetFilters()">Reset</button>
+  </div>
+
+  <div class="upload-panel">
+    <div class="upload-panel__text">
+      <strong>Upload an attachment</strong>
+      <span>PDF, image or document · reference reclamation #{{ reclamationId || '—' }}</span>
+    </div>
+    <div class="upload-panel__actions">
+      <label class="file-picker">
+        <input type="file" (change)="onFileSelected($event)" #fileInput />
+        <span>{{ selectedFile ? selectedFile.name : 'Choose a file' }}</span>
+      </label>
+      <button class="btn btn--ghost btn--small" type="button" *ngIf="selectedFile"
+              (click)="clearFile(fileInput)">Clear</button>
+      <button class="btn btn--primary btn--small" type="button"
+              (click)="upload()" [disabled]="uploading || !selectedFile || !reclamationId">
+        {{ uploading ? 'Uploading…' : 'Upload' }}
+      </button>
+    </div>
+  </div>
+
+  <p class="loading-state" *ngIf="loading && attachments.length === 0">Loading attachments…</p>
+
+  <div class="table-container">
+    <table class="credit-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>File</th>
+          <th>Type</th>
+          <th>Size</th>
+          <th>Uploaded by</th>
+          <th>Uploaded at</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let a of attachments; trackBy: trackByAttachmentId">
+          <td class="cell-id">#{{ a.attachmentId }}</td>
+          <td>
+            <span class="cell-name">{{ a.fileName }}</span>
+            <span class="badge status--active" *ngIf="isImage(a.contentType)">image</span>
+          </td>
+          <td>{{ a.contentType || '—' }}</td>
+          <td>{{ formatSize(a.sizeBytes) }}</td>
+          <td>User #{{ a.uploadedByUserId }}</td>
+          <td>{{ a.uploadedAt ? (a.uploadedAt | date:'short') : '—' }}</td>
+          <td>
+            <div class="table-actions">
+              <a class="btn btn--small btn--details" *ngIf="a.fileUrl" [href]="a.fileUrl"
+                 target="_blank" rel="noopener">Open</a>
+              <a class="btn btn--small btn--secondary" *ngIf="a.fileUrl" [href]="a.fileUrl"
+                 download="{{ a.fileName }}">Download</a>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="table-empty" *ngIf="attachments.length === 0 && !loading">
+      {{ reclamationId ? 'No attachments for this reclamation.' : 'Enter a reclamation ID to load its attachments.' }}
+    </p>
+  </div>
+
+  <app-pagination
+    [page]="page"
+    [totalPages]="totalPages"
+    [totalElements]="filteredAttachments.length"
+    (previous)="prevPage()"
+    (next)="nextPage()">
+  </app-pagination>
+
+</app-page-layout>

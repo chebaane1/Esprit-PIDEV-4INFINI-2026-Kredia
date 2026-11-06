@@ -243,6 +243,31 @@ public class ReclamationServiceImpl implements ReclamationService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<ReclamationResponse> search(ReclamationStatus status,
+                                            ReclamationCategory category,
+                                            String query,
+                                            int page,
+                                            int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        String normalized = (query == null || query.isBlank()) ? null : "%" + query.trim().toLowerCase() + "%";
+        return reclamationRepository.search(status, category, normalized, pageable).map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReclamationResponse> searchByUser(Long userId,
+                                                  ReclamationStatus status,
+                                                  ReclamationCategory category,
+                                                  String query,
+                                                  int page,
+                                                  int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        String normalized = (query == null || query.isBlank()) ? null : "%" + query.trim().toLowerCase() + "%";
+        return reclamationRepository.searchByUser(userId, status, category, normalized, pageable).map(this::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<ReclamationResponse> getByStatus(ReclamationStatus status, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return reclamationRepository.findByStatus(status, pageable).map(this::toResponse);

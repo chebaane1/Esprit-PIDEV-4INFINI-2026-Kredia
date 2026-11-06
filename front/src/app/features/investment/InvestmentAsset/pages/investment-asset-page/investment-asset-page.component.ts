@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AssetCategory, AssetRiskLevel, InvestmentAsset } from '../../models/investment-asset.model';
 import { InvestmentAssetVm } from '../../vm/investment-asset.vm';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-investment-asset-page',
@@ -13,6 +14,7 @@ import { InvestmentAssetVm } from '../../vm/investment-asset.vm';
 })
 export class InvestmentAssetPageComponent implements OnInit {
   private readonly vm = inject(InvestmentAssetVm);
+  private readonly auth = inject(AuthService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   loading = false;
@@ -26,6 +28,10 @@ export class InvestmentAssetPageComponent implements OnInit {
 
   readonly categoryOptions: Array<'ALL' | AssetCategory> = ['ALL', 'STOCK', 'CRYPTO', 'BOND', 'ETF', 'COMMODITY'];
   readonly riskOptions: Array<'ALL' | AssetRiskLevel> = ['ALL', 'LOW', 'MEDIUM', 'HIGH', 'VERY_HIGH'];
+
+  get isAdmin(): boolean {
+    return this.auth.isAdmin();
+  }
 
   ngOnInit(): void {
     this.loadAssets();

@@ -1,12 +1,19 @@
-export type WalletStatus = 'ACTIVE' | 'FROZEN' | 'CLOSED';
-export type WalletType = 'MAIN' | 'SAVINGS' | 'LOAN';
+export type WalletStatus = 'ACTIVE' | 'SUSPENDED' | 'CLOSED' | 'FROZEN';
+
+export interface WalletUser {
+  userId: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
 
 export interface Wallet {
   walletId?: number;
-  userId: number;
-  balance: number;
-  currency: string;
-  walletType: WalletType;
+  userId?: number;
+  user?: WalletUser;
+  balance: number | string;
+  frozenBalance?: number | string;
   status: WalletStatus;
   createdAt?: string;
+  updatedAt?: string;
 }

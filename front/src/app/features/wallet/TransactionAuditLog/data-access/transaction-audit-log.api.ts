@@ -9,10 +9,10 @@ export class TransactionAuditLogApi {
   constructor(private readonly http: HttpClient) {}
 
   findAll(): Observable<TransactionAuditLog[]> {
-    return this.http.get<TransactionAuditLog[]>(`${API_BASE_URL}/api/transaction-audit-logs`);
+    return this.http.get<TransactionAuditLog[]>(`${API_BASE_URL}/api/audit-logs`);
   }
 
   findByTransaction(transactionId: number): Observable<TransactionAuditLog[]> {
-    return this.http.get<TransactionAuditLog[]>(`${API_BASE_URL}/api/transaction-audit-logs/transaction/${transactionId}`);
+    return this.http.get<TransactionAuditLog[]>(`${API_BASE_URL}/api/audit-logs/transaction/${transactionId}`);
   }
 }

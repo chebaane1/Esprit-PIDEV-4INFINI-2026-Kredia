@@ -1,0 +1,34 @@
+<div class="pub-sim page-shell">
+  <header class="hero-band page-hero">
+    <div class="hero-band__inner">
+      <div class="hero-band__text">
+        <span class="hero-pill" *ngIf="eyebrow">
+          <span class="hero-pill__dot"></span>
+          {{ eyebrow }}
+        </span>
+        <h1>
+          {{ title }}<ng-container *ngIf="accent"><br><span class="accent">{{ accent }}</span></ng-container>
+        </h1>
+        <p *ngIf="subtitle">{{ subtitle }}</p>
+      </div>
+
+      <div class="hero-band__badge" *ngIf="showBadge && badgeValue">
+        <div class="badge-ring">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="badge-value">{{ badgeValue }}</span>
+          <span class="badge-label">{{ badgeLabel }}</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="sim-card-wrapper">
+    <div class="sim-card page-card">
+      <ng-content></ng-content>
+    </div>
+  </div>
+</div>

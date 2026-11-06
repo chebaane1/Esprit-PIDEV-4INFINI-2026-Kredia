@@ -1,4 +1,69 @@
-<div class="page-container">
-  <h1>Reclamation Message</h1>
-  <p>This is a placeholder for the Reclamation Message component.</p>
-</div>
+<app-page-layout
+  eyebrow="Support · Conversation"
+  title="Reclamation Messages"
+  accent="Thread"
+  subtitle="Follow the conversation between the customer and the support team, in real time."
+  badgeValue="Chat"
+  badgeLabel="Portal">
+
+  <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+
+  <div class="toolbar">
+    <div class="field field--inline">
+      <label for="reclamationId">Reclamation</label>
+      <input id="reclamationId" class="input" type="number" min="1" placeholder="e.g. 42"
+             [(ngModel)]="reclamationId" (keyup.enter)="loadMessages()" />
+    </div>
+    <label class="checkbox" *ngIf="isStaff">
+      <input type="checkbox" [(ngModel)]="includeInternal" (change)="refresh()" />
+      <span>Include internal notes</span>
+    </label>
+    <button class="btn btn--primary btn--small" type="button" (click)="loadMessages()" [disabled]="loading">
+      {{ loading ? 'Loading…' : 'Load thread' }}
+    </button>
+    <button class="btn btn--secondary btn--small" type="button" (click)="refresh()" [disabled]="loading || !reclamationId">
+      Refresh
+    </button>
+  </div>
+
+  <div class="empty-state" *ngIf="!reclamationId">
+    <h3>Select a reclamation</h3>
+    <p>Enter a reclamation ID above to open its conversation thread.</p>
+  </div>
+
+  <p class="loading-state" *ngIf="loading && messages.length === 0">Loading messages…</p>
+
+  <div class="chat" *ngIf="reclamationId">
+    <div class="chat__thread" #thread>
+      <div class="empty-state" *ngIf="messages.length === 0 && !loading">
+        <h3>No messages yet</h3>
+        <p>Start the conversation using the composer below.</p>
+      </div>
+
+      <article class="chat-message" *ngFor="let m of messages; trackBy: trackByMessageId"
+               [class.chat-message--own]="isOwn(m)">
+        <div class="chat-message__meta">
+          <span class="chat-message__author">{{ isOwn(m) ? 'You' : ('User #' + m.authorUserId) }}</span>
+          <span [class]="getVisibilityClass(m.visibility)">{{ m.visibility }}</span>
+          <span class="chat-message__time">{{ m.createdAt ? (m.createdAt | date:'short') : '' }}</span>
+        </div>
+        <p class="chat-message__body">{{ m.message }}</p>
+      </article>
+    </div>
+
+    <div class="chat__composer">
+      <textarea class="textarea" rows="3" placeholder="Write a message… (Ctrl+Enter to send)"
+                [(ngModel)]="newMessage.message" (keydown)="onComposerKeydown($event)"></textarea>
+      <div class="chat__composer-actions">
+        <select class="select" *ngIf="isStaff" [(ngModel)]="newMessage.visibility">
+          <option value="CUSTOMER">Customer visible</option>
+          <option value="INTERNAL">Internal note</option>
+        </select>
+        <button class="btn btn--primary" type="button" (click)="send()" [disabled]="sending || !newMessage.message.trim()">
+          {{ sending ? 'Sending…' : 'Send message' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</app-page-layout>

@@ -1,6 +1,7 @@
 package com.kredia.repository;
 
 import com.kredia.entity.support.Reclamation;
+import com.kredia.enums.ReclamationCategory;
 import com.kredia.enums.ReclamationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,34 @@ public interface ReclamationRepository extends JpaRepository<Reclamation, Long> 
     Page<Reclamation> findByUserId(Long userId, Pageable pageable);
 
     Page<Reclamation> findByStatus(ReclamationStatus status, Pageable pageable);
+
+    @Query("""
+            SELECT r FROM Reclamation r
+            WHERE (:status IS NULL OR r.status = :status)
+              AND (:category IS NULL OR r.category = :category)
+              AND (:q IS NULL OR r.subject LIKE :q OR r.description LIKE :q)
+            """)
+    Page<Reclamation> search(
+            @Param("status") ReclamationStatus status,
+            @Param("category") ReclamationCategory category,
+            @Param("q") String query,
+            Pageable pageable
+    );
+
+    @Query("""
+            SELECT r FROM Reclamation r
+            WHERE r.userId = :userId
+              AND (:status IS NULL OR r.status = :status)
+              AND (:category IS NULL OR r.category = :category)
+              AND (:q IS NULL OR r.subject LIKE :q OR r.description LIKE :q)
+            """)
+    Page<Reclamation> searchByUser(
+            @Param("userId") Long userId,
+            @Param("status") ReclamationStatus status,
+            @Param("category") ReclamationCategory category,
+            @Param("q") String query,
+            Pageable pageable
+    );
 
     long countByUserId(Long userId);
 

@@ -14,6 +14,7 @@ import { InvestmentOrderVm } from '../InvestmentOrder/vm/investment-order.vm';
 import { InvestmentOrder } from '../InvestmentOrder/models/investment-order.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { InvestmentInsightComponent, PortfolioTopPosition } from './investment-insight/investment-insight.component';
 
 type MarketTrend = 'positive' | 'negative';
 
@@ -44,18 +45,10 @@ interface MarketSearchResult {
   displayLabel: string;
 }
 
-interface PortfolioTopPosition {
-  assetSymbol: string;
-  currentValue: number;
-  profitLossDollars: number;
-  profitLossPercentage: number;
-  portfolioSharePct: number;
-}
-
 @Component({
   selector: 'app-investment-chart',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, InvestmentInsightComponent],
   templateUrl: './investment-chart.component.html',
   styleUrls: ['./investment-chart.component.scss']
 })
@@ -101,7 +94,6 @@ export class InvestmentChartComponent implements OnInit, OnDestroy {
   geminiAnalysis: any = null;
   geminiLoading = false;
   geminiError = '';
-  geminiDetailOpen = false;
   portfolioTopPositions: PortfolioTopPosition[] = [];
   portfolioTotalValue = 0;
   portfolioTopLoading = false;
@@ -1021,7 +1013,6 @@ export class InvestmentChartComponent implements OnInit, OnDestroy {
     this.geminiLoading = true;
     this.geminiError = '';
     this.geminiAnalysis = null;
-    this.geminiDetailOpen = false;
 
     const payload = {
       language: 'en',
@@ -1220,48 +1211,6 @@ export class InvestmentChartComponent implements OnInit, OnDestroy {
     }
 
     return sectors;
-  }
-
-  formatPercentage(value: number | null | undefined): string {
-    if (value === null || value === undefined || Number.isNaN(Number(value))) {
-      return '-';
-    }
-
-    return `${Number(value) > 0 ? '+' : ''}${Number(value).toFixed(2)}%`;
-  }
-
-  formatYield(value: number | null | undefined): string {
-    if (value === null || value === undefined || Number.isNaN(Number(value))) {
-      return '-';
-    }
-
-    return `${Number(value).toFixed(2)}%`;
-  }
-
-  getTrendBadgeClass(trend: string): string {
-    const normalized = String(trend || '').toLowerCase();
-
-    if (normalized === 'bullish') return 'is-bullish';
-    if (normalized === 'bearish') return 'is-bearish';
-    return 'is-neutral';
-  }
-
-  getSeverityClass(severity: string): string {
-    const normalized = String(severity || '').toLowerCase();
-
-    if (normalized === 'high') return 'is-high';
-    if (normalized === 'medium') return 'is-medium';
-    return 'is-low';
-  }
-
-  get geminiSentimentLabel(): string {
-    const sentiment = this.geminiAnalysis?.sentiment || 'neutral';
-    const labels: { [key: string]: string } = {
-      bullish: '📈 Haussier',
-      bearish: '📉 Baissier',
-      neutral: '➡️ Neutre'
-    };
-    return labels[sentiment] || 'Neutre';
   }
 
   // ==================== Choice Modal Methods ====================

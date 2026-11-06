@@ -193,3 +193,16 @@
     transform: scale(0.97);
   }
 }
+
+.register-link {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 16px 0 0;
+
+  a {
+    color: var(--emerald-600);
+    font-weight: 600;
+    text-decoration: none;
+  }
+}

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, inject, Input, OnInit, OnDestroy, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { DarkModeService } from '../../services/dark-mode.service';
@@ -44,6 +44,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
   unreadCount = 0;
   showDropdown = false;
   isSimulateurPage = false;
+
+  @Input() showMenuButton = false;
+  @Output() menuToggle = new EventEmitter<void>();
+
   private seenIds = new Set<string>();
   private sub: Subscription | null = null;
 

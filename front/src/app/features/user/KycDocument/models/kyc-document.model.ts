@@ -1,12 +1,25 @@
-export type DocType = 'ID_CARD' | 'PASSPORT' | 'PROOF_OF_ADDRESS' | 'SELFIE' | 'OTHER';
-export type DocStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type DocumentType =
+  | 'CIN'
+  | 'SIGNATURE'
+  | 'INCOME_PROOF'
+  | 'BANK_STATEMENT'
+  | 'TAX_RETURN'
+  | 'EMPLOYMENT_CONTRACT';
+
+export type KycStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface KycDocument {
-  docId?: number;
-  userId: number;
-  docType: DocType;
-  filePath?: string;
-  status: DocStatus;
-  submittedAt?: string;
-  reviewedAt?: string;
+  kycId?: number;
+  userId?: number;
+  documentType: DocumentType;
+  filePath: string;
+  status: KycStatus;
+  createdAt?: string;
+  verifiedAt?: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  timestamp?: string;
 }

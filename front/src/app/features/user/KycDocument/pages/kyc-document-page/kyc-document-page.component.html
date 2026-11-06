@@ -1,4 +1,110 @@
-<div class="page-container">
-  <h1>Kyc Document</h1>
-  <p>This is a placeholder for the Kyc Document component.</p>
+<div class="pub-sim">
+  <header class="hero-band">
+    <div class="hero-band__inner">
+      <div class="hero-band__text">
+        <span class="hero-pill"><span class="hero-pill__dot"></span>KYC</span>
+        <h1>KYC Documents — <br><span class="accent">Management</span></h1>
+        <p>{{ isClient ? 'Upload and manage your identity documents.' : 'Search a customer and review their KYC documents.' }}</p>
+      </div>
+      <div class="hero-band__badge">
+        <div class="badge-ring">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="badge-value">User</span>
+          <span class="badge-label">Portal</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="sim-card-wrapper">
+    <div class="sim-card" style="padding: 40px; display: block;">
+      <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+      <div class="alert alert--success" *ngIf="success">{{ success }}</div>
+
+      <div class="panel-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 32px;">
+        <div>
+          <h2 class="panel-title">{{ isClient ? 'Upload document' : 'Customer KYC lookup' }}</h2>
+          <p class="panel-subtitle">{{ isClient ? 'Upload your KYC documents for verification.' : 'Enter a customer user ID to view their KYC documents.' }}</p>
+        </div>
+      </div>
+
+      <!-- Customer lookup (agents / admins) -->
+      <div class="card" style="margin-bottom: 24px;" *ngIf="!isClient">
+        <div class="upload-form" style="display: flex; flex-wrap: wrap; gap: 14px; align-items: end;">
+          <div class="field">
+            <label>Customer user ID</label>
+            <input type="number" min="1" placeholder="e.g. 42" [(ngModel)]="lookupUserId" (keyup.enter)="lookupCustomer()" />
+          </div>
+          <button class="btn btn--request" type="button" (click)="lookupCustomer()" [disabled]="loading">
+            {{ loading ? 'Loading...' : 'Load documents' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Upload (clients / admins) -->
+      <div class="card" style="margin-bottom: 24px;" *ngIf="!isAgent">
+        <div class="upload-form" style="display: flex; flex-wrap: wrap; gap: 14px; align-items: end;">
+          <div class="field">
+            <label>Document type</label>
+            <select [(ngModel)]="selectedType">
+              <option *ngFor="let t of documentTypes" [value]="t">{{ t }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>File</label>
+            <input type="file" (change)="onFileSelected($event)" />
+          </div>
+          <button class="btn btn--request" (click)="upload()" [disabled]="uploading || !selectedFile">
+            {{ uploading ? 'Uploading...' : 'Upload' }}
+          </button>
+        </div>
+      </div>
+
+      <p *ngIf="loading && documents.length === 0">Loading...</p>
+
+      <div class="table-container">
+        <table class="credit-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>File</th>
+              <th>Created</th>
+              <th>Verified</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let d of documents">
+              <td class="cell-id">{{ d.kycId }}</td>
+              <td>{{ d.documentType }}</td>
+              <td>
+                <span [class]="'badge ' + getStatusClass(d.status)">{{ d.status }}</span>
+              </td>
+              <td>
+                <a *ngIf="d.filePath" [href]="d.filePath" target="_blank" rel="noopener" class="btn btn--small">View</a>
+              </td>
+              <td>{{ d.createdAt | date:'short' }}</td>
+              <td>{{ d.verifiedAt | date:'short' }}</td>
+              <td class="actions">
+                <ng-container *ngIf="isAdmin">
+                  <button class="btn btn--small btn--approve" (click)="verify(d, 'APPROVED')">Approve</button>
+                  <button class="btn btn--small btn--reject" (click)="verify(d, 'REJECTED')">Reject</button>
+                </ng-container>
+                <span *ngIf="!isAdmin">—</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p *ngIf="documents.length === 0 && !loading" class="empty-state">
+          {{ isClient ? 'No documents found.' : (lookupUserId == null ? 'Enter a customer user ID to load their KYC documents.' : 'No documents found for this customer.') }}
+        </p>
+      </div>
+    </div>
+  </div>
 </div>

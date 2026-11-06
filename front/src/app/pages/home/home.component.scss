@@ -619,3 +619,10 @@ html.dark-mode .coach-card {
   }
 }
 
+.modules { padding: 40px 20px; max-width: 1200px; margin: 0 auto; }
+.module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 20px; }
+.module-card { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; text-decoration: none; color: var(--text-primary); box-shadow: 0 4px 16px var(--shadow-color); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.module-card span { font-size: 2rem; }
+.module-card h3 { margin: 8px 0 4px; font-size: 1.1rem; }
+.module-card p { margin: 0; color: var(--text-secondary); font-size: 0.85rem; }
+.module-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px var(--shadow-color); }
