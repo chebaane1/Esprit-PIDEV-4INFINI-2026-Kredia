@@ -2,11 +2,13 @@
   <div class="app-layout">
 
     <!-- Sidebar: hidden on home and public (unauthenticated) simulator -->
-    <app-sidebar *ngIf="!isHomePage && !isPublicSimulateurPage"></app-sidebar>
+    <app-sidebar *ngIf="showSidebar" [class.sidebar-open]="sidebarOpen"></app-sidebar>
+
+    <div class="sidebar-backdrop" *ngIf="sidebarOpen" (click)="closeSidebar()" aria-hidden="true"></div>
 
     <!-- Main area -->
     <div class="main-area" [class.no-sidebar]="isHomePage || isPublicSimulateurPage">
-      <app-navbar></app-navbar>
+      <app-navbar [showMenuButton]="showSidebar" (menuToggle)="toggleSidebar()"></app-navbar>
       <main class="page-content">
         <router-outlet></router-outlet>
       </main>

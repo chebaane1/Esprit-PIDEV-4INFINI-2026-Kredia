@@ -6,6 +6,7 @@ import com.kredia.service.KycLoanService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -70,6 +71,7 @@ public class KycLoanController {
         return new ResponseEntity<>(kycLoanService.getAllDocuments(), HttpStatus.OK);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     @PutMapping("/{kycLoanId}/approve")
     public ResponseEntity<?> approveDocument(@PathVariable Long kycLoanId) {
         try {
@@ -79,6 +81,7 @@ public class KycLoanController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     @PutMapping("/{kycLoanId}/reject")
     public ResponseEntity<?> rejectDocument(@PathVariable Long kycLoanId) {
         try {
@@ -88,6 +91,7 @@ public class KycLoanController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     @PutMapping("/{kycLoanId}/verify")
     public ResponseEntity<?> forceVerification(@PathVariable Long kycLoanId) {
         try {
@@ -111,6 +115,7 @@ public class KycLoanController {
     /**
      * Admin utility: fix credit_id for all KYC loans linked to approved demandes
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/fix-credit-links")
     public ResponseEntity<String> fixCreditLinks() {
         int updated = kycLoanService.fixCreditLinksForApprovedDemandes();

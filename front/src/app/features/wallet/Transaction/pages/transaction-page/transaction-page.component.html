@@ -1,4 +1,239 @@
-<div class="page-container">
-  <h1>Transaction</h1>
-  <p>This is a placeholder for the Transaction component.</p>
-</div>
+<app-page-layout
+  eyebrow="Wallet"
+  title="Transactions"
+  accent="History"
+  subtitle="Review every wallet movement, follow settlement status and act on pending operations."
+  badgeValue="Wallet"
+  badgeLabel="Portal">
+
+  <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+  <div class="alert alert--success" *ngIf="success">{{ success }}</div>
+
+  <div class="stat-grid">
+    <div class="stat-card stat-card--blue">
+      <span class="stat-card__label">Transactions</span>
+      <span class="stat-card__value">{{ filteredTransactions.length }}</span>
+    </div>
+    <div class="stat-card stat-card--green">
+      <span class="stat-card__label">Completed</span>
+      <span class="stat-card__value">{{ completedCount }}</span>
+    </div>
+    <div class="stat-card stat-card--amber">
+      <span class="stat-card__label">Pending</span>
+      <span class="stat-card__value">{{ pendingCount }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card__label">Total amount</span>
+      <span class="stat-card__value">{{ totalAmount | number:'1.2-2' }}</span>
+    </div>
+  </div>
+
+  <div class="panel-header ds-header">
+    <div>
+      <h2 class="panel-title">{{ isClient ? 'My transactions' : 'All transactions' }}</h2>
+      <p class="panel-subtitle">Search, filter and inspect each operation.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn--request" type="button" *ngIf="isAdmin || isClient" (click)="toggleCreate()">
+        {{ showCreate ? 'Cancel' : '+ New transaction' }}
+      </button>
+      <button class="btn btn--secondary" type="button" *ngIf="isClient" (click)="togglePay()">
+        {{ showPay ? 'Cancel' : 'Pay installment' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar__search">
+      <input class="input" type="search" placeholder="Search reference or description…"
+             [(ngModel)]="referenceFilter" (keyup.enter)="applyFilters()" />
+    </div>
+    <select class="select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+      <option value="">All statuses</option>
+      <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+    </select>
+    <select class="select" [(ngModel)]="sourceWalletFilter" (change)="applyFilters()">
+      <option [ngValue]="null">Source wallet</option>
+      <option *ngFor="let w of wallets" [ngValue]="w.walletId">{{ walletLabel(w.walletId) }}</option>
+    </select>
+    <select class="select" [(ngModel)]="destinationWalletFilter" (change)="applyFilters()">
+      <option [ngValue]="null">Destination wallet</option>
+      <option *ngFor="let w of wallets" [ngValue]="w.walletId">{{ walletLabel(w.walletId) }}</option>
+    </select>
+    <input class="input" type="number" min="0" placeholder="Min amount" [(ngModel)]="amountMin" />
+    <input class="input" type="number" min="0" placeholder="Max amount" [(ngModel)]="amountMax" />
+    <button class="btn btn--primary btn--small" type="button" (click)="applyFilters()">Search</button>
+    <button class="btn btn--secondary btn--small" type="button" (click)="resetFilters()">Reset</button>
+  </div>
+
+  <p class="loading-state" *ngIf="loading && transactions.length === 0">Loading transactions…</p>
+
+  <div class="table-container">
+    <table class="credit-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Date</th>
+          <th>Source</th>
+          <th>Destination</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Reference</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of transactions; trackBy: trackByTransactionId">
+          <td class="cell-id">#{{ t.transactionId }}</td>
+          <td>{{ t.transactionDate ? (t.transactionDate | date:'short') : '—' }}</td>
+          <td>{{ walletLabel(walletIdOf(t.sourceWallet)) }}</td>
+          <td>{{ t.destinationWallet ? walletLabel(walletIdOf(t.destinationWallet)) : '—' }}</td>
+          <td class="cell-amount">{{ t.amount | number:'1.2-2' }}</td>
+          <td><span [class]="'badge ' + getStatusClass(t.status || '')">{{ t.status }}</span></td>
+          <td class="cell-reference">{{ t.reference || t.description || '—' }}</td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn--small btn--details" type="button" (click)="openDetails(t)">Details</button>
+              <ng-container *ngIf="isAdmin">
+                <select class="select status-select" [value]="t.status || ''"
+                        (change)="updateStatus(t, $any($event.target).value, $any($event.target))"
+                        aria-label="Change status">
+                  <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+                </select>
+                <button class="btn btn--small btn--danger" type="button" (click)="delete(t)">Delete</button>
+              </ng-container>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="table-empty" *ngIf="transactions.length === 0 && !loading">No transactions match the current filters.</p>
+  </div>
+
+  <app-pagination
+    [page]="page"
+    [totalPages]="totalPages"
+    [totalElements]="filteredTransactions.length"
+    (previous)="prevPage()"
+    (next)="nextPage()">
+  </app-pagination>
+
+  <!-- ═══ Create transaction modal ═══ -->
+  <div class="modal-overlay" *ngIf="showCreate && (isAdmin || isClient)" (click)="toggleCreate()">
+    <div class="modal-box modal-box--lg" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>New transaction</h2>
+        <button class="modal-close" type="button" (click)="toggleCreate()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field">
+            <label>Source wallet</label>
+            <select [(ngModel)]="form.sourceWalletId" [disabled]="isClient">
+              <option [ngValue]="null" disabled>Select a wallet</option>
+              <option *ngFor="let w of wallets" [ngValue]="w.walletId">
+                {{ walletLabel(w.walletId) }} · {{ w.balance | number:'1.2-2' }}
+              </option>
+            </select>
+            <small *ngIf="isClient">Your own wallet is selected automatically.</small>
+          </div>
+          <div class="field">
+            <label>Destination wallet (optional)</label>
+            <select [(ngModel)]="form.destinationWalletId">
+              <option [ngValue]="null">None</option>
+              <option *ngFor="let w of wallets" [ngValue]="w.walletId"
+                      [disabled]="w.walletId === form.sourceWalletId">
+                {{ walletLabel(w.walletId) }}
+              </option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Amount</label>
+            <input type="number" min="0.01" step="0.01" placeholder="0.00" [(ngModel)]="form.amount" />
+          </div>
+          <div class="field">
+            <label>Reference</label>
+            <input type="text" placeholder="e.g. INV-2026-001" [(ngModel)]="form.reference" />
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select [(ngModel)]="form.status" [disabled]="isClient">
+              <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+            </select>
+            <small *ngIf="isClient">Client transactions start as PENDING.</small>
+          </div>
+          <div class="field field--full">
+            <label>Description</label>
+            <input type="text" placeholder="Optional note about this operation" [(ngModel)]="form.description" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="toggleCreate()">Cancel</button>
+        <button class="btn btn--primary" type="button" (click)="create()" [disabled]="creating">
+          {{ creating ? 'Creating…' : 'Create transaction' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Pay installment modal ═══ -->
+  <div class="modal-overlay" *ngIf="showPay" (click)="togglePay()">
+    <div class="modal-box modal-box--sm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Pay installment</h2>
+        <button class="modal-close" type="button" (click)="togglePay()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid form-grid--single">
+          <div class="field">
+            <label>Echeance ID</label>
+            <input type="number" min="1" placeholder="e.g. 12" [(ngModel)]="payForm.echeanceId" />
+          </div>
+          <div class="field">
+            <label>Amount</label>
+            <input type="number" min="0.01" step="0.01" placeholder="0.00" [(ngModel)]="payForm.amount" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="togglePay()">Cancel</button>
+        <button class="btn btn--primary" type="button" (click)="payEcheance()" [disabled]="paying">
+          {{ paying ? 'Paying…' : 'Pay installment' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Transaction details modal ═══ -->
+  <div class="modal-overlay" *ngIf="detailsTransaction" (click)="closeDetails()">
+    <div class="modal-box" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Transaction #{{ detailsTransaction.transactionId }}</h2>
+        <button class="modal-close" type="button" (click)="closeDetails()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <dl class="detail-grid">
+          <div class="detail-item"><dt>Amount</dt><dd>{{ detailsTransaction.amount | number:'1.2-2' }}</dd></div>
+          <div class="detail-item"><dt>Status</dt>
+            <dd><span [class]="'badge ' + getStatusClass(detailsTransaction.status || '')">{{ detailsTransaction.status }}</span></dd>
+          </div>
+          <div class="detail-item"><dt>Source wallet</dt><dd>{{ walletLabel(walletIdOf(detailsTransaction.sourceWallet)) }}</dd></div>
+          <div class="detail-item"><dt>Destination wallet</dt>
+            <dd>{{ detailsTransaction.destinationWallet ? walletLabel(walletIdOf(detailsTransaction.destinationWallet)) : '—' }}</dd>
+          </div>
+          <div class="detail-item"><dt>Reference</dt><dd>{{ detailsTransaction.reference || '—' }}</dd></div>
+          <div class="detail-item"><dt>Date</dt>
+            <dd>{{ detailsTransaction.transactionDate ? (detailsTransaction.transactionDate | date:'medium') : '—' }}</dd>
+          </div>
+          <div class="detail-item"><dt>Type</dt><dd>{{ detailsTransaction.dtype || 'TRANSACTION' }}</dd></div>
+          <div class="detail-item detail-item--full"><dt>Description</dt><dd>{{ detailsTransaction.description || '—' }}</dd></div>
+        </dl>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="closeDetails()">Close</button>
+      </div>
+    </div>
+  </div>
+
+</app-page-layout>

@@ -25,6 +25,23 @@ export class ShellComponent implements OnInit {
   isSimulateurPage      = false;
   isPublicSimulateurPage = false; // simulateur + not authenticated
 
+  sidebarOpen = false;
+
+  get showSidebar(): boolean {
+    return !this.isHomePage && !this.isPublicSimulateurPage;
+  }
+
+  toggleSidebar(): void {
+    this.sidebarOpen = !this.sidebarOpen;
+    this.cdr.markForCheck();
+  }
+
+  closeSidebar(): void {
+    if (!this.sidebarOpen) return;
+    this.sidebarOpen = false;
+    this.cdr.markForCheck();
+  }
+
   ngOnInit(): void {
     this.updateFlags(this.router.url);
 
@@ -32,6 +49,7 @@ export class ShellComponent implements OnInit {
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
       this.updateFlags(event.urlAfterRedirects || event.url);
+      this.closeSidebar();
       this.cdr.markForCheck();
     });
   }

@@ -193,6 +193,7 @@
             <th>Repayment Type</th>
             <th>Monthly Income</th>
             <th>Dependents</th>
+            <th>🤖 ML Risk</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -211,6 +212,22 @@
             <td class="cell-type">{{ getRepaymentLabel(d.repaymentType) }}</td>
             <td class="cell-income">{{ d.income | number:'1.2-2' }} <small>DT</small></td>
             <td class="cell-dependents">{{ d.dependents }}</td>
+            <!-- ML Risk Cell -->
+            <td>
+              <ng-container *ngIf="mlPredictions[d.creditId!] as pred">
+                <div class="ml-mini-badge" [class.ml-mini-badge--ok]="pred.status === 0" [class.ml-mini-badge--risk]="pred.status === 1">
+                  <span class="ml-mini-badge__icon">{{ pred.status === 0 ? '✅' : '⚠️' }}</span>
+                  <span class="ml-mini-badge__label">{{ pred.risk_level }}</span>
+                </div>
+                <small class="ml-mini-score">{{ (pred.eligibility_score * 100).toFixed(0) }}% eligible</small>
+              </ng-container>
+              <ng-container *ngIf="!mlPredictions[d.creditId!]">
+                <button class="btn btn--small btn--ml-scan" (click)="runMlPrediction(d)" [disabled]="mlLoading[d.creditId!]">
+                  <span *ngIf="!mlLoading[d.creditId!]">🤖 Scan</span>
+                  <span *ngIf="mlLoading[d.creditId!]">...</span>
+                </button>
+              </ng-container>
+            </td>
             <td>
               <span [class]="'badge ' + getStatusClass(d.status)">
                 {{ getStatusLabel(d.status) }}

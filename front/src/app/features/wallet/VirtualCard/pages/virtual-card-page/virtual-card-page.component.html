@@ -1,4 +1,148 @@
-<div class="page-container">
-  <h1>Virtual Card</h1>
-  <p>This is a placeholder for the Virtual Card component.</p>
-</div>
+<app-page-layout
+  eyebrow="Wallet · Cards"
+  [title]="isClient ? 'My Virtual Card' : 'Virtual Cards'"
+  accent="Management"
+  subtitle="Generate and manage virtual payment cards attached to a wallet."
+  badgeValue="Card"
+  badgeLabel="Portal">
+
+  <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+
+  <div class="stat-grid">
+    <div class="stat-card stat-card--blue">
+      <span class="stat-card__label">Cards</span>
+      <span class="stat-card__value">{{ filteredCards.length }}</span>
+    </div>
+    <div class="stat-card stat-card--green">
+      <span class="stat-card__label">Active</span>
+      <span class="stat-card__value">{{ activeCount }}</span>
+    </div>
+    <div class="stat-card stat-card--amber">
+      <span class="stat-card__label">Blocked</span>
+      <span class="stat-card__value">{{ blockedCount }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card__label">Selected wallet</span>
+      <span class="stat-card__value stat-card__value--small">
+        {{ walletId ? ('#' + walletId) : 'None' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="panel-header ds-header">
+    <div>
+      <h2 class="panel-title">{{ isClient ? 'My cards' : 'Wallet cards' }}</h2>
+      <p class="panel-subtitle">Choose a wallet, then generate or review its virtual cards.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn--request" type="button" *ngIf="!isAgent" (click)="generateCard()"
+              [disabled]="generating || !walletId">
+        {{ generating ? 'Generating…' : '+ Generate card' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <select class="select" *ngIf="!isClient" [(ngModel)]="walletId" (change)="onWalletChange()">
+      <option [ngValue]="null" disabled>Select a wallet</option>
+      <option *ngFor="let w of wallets" [ngValue]="w.walletId">{{ walletLabel(w) }}</option>
+    </select>
+    <div class="toolbar__search">
+      <input class="input" type="search" placeholder="Search card number or provider…"
+             [(ngModel)]="searchFilter" (keyup.enter)="applyFilters()" />
+    </div>
+    <select class="select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+      <option value="">All statuses</option>
+      <option value="ACTIVE">ACTIVE</option>
+      <option value="BLOCKED">BLOCKED</option>
+      <option value="EXPIRED">EXPIRED</option>
+      <option value="CANCELLED">CANCELLED</option>
+    </select>
+    <button class="btn btn--primary btn--small" type="button" (click)="applyFilters()">Search</button>
+    <button class="btn btn--secondary btn--small" type="button" (click)="resetFilters()">Reset</button>
+  </div>
+
+  <p class="loading-state" *ngIf="loading && cards.length === 0">Loading virtual cards…</p>
+
+  <div class="table-container">
+    <table class="credit-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Card number</th>
+          <th>Expiry</th>
+          <th>Provider</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of cards; trackBy: trackByCardId">
+          <td class="cell-id">#{{ c.id }}</td>
+          <td class="cell-card">{{ maskCard(c.cardNumber) }}</td>
+          <td>{{ c.expiryDate || '—' }}</td>
+          <td>{{ c.provider || '—' }}</td>
+          <td><span [class]="'badge ' + getStatusClass(c.status)">{{ c.status }}</span></td>
+          <td>{{ c.createdAt ? (c.createdAt | date:'short') : '—' }}</td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn--small btn--details" type="button" (click)="openDetails(c)">Details</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="table-empty" *ngIf="cards.length === 0 && !loading">
+      {{ walletId ? 'No virtual cards for this wallet.' : 'Select a wallet to display its cards.' }}
+    </p>
+  </div>
+
+  <app-pagination
+    [page]="page"
+    [totalPages]="totalPages"
+    [totalElements]="filteredCards.length"
+    (previous)="prevPage()"
+    (next)="nextPage()">
+  </app-pagination>
+
+  <!-- ═══ Card details ═══ -->
+  <div class="modal-overlay" *ngIf="detailsCard" (click)="closeDetails()">
+    <div class="modal-box modal-box--sm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Virtual card #{{ detailsCard.id }}</h2>
+        <button class="modal-close" type="button" (click)="closeDetails()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="card-preview">
+          <span class="card-preview__chip"></span>
+          <span class="card-preview__number">
+            {{ revealNumber ? formatCard(detailsCard.cardNumber) : maskCard(detailsCard.cardNumber) }}
+          </span>
+          <div class="card-preview__meta">
+            <span>{{ detailsCard.provider || 'VIRTUAL' }}</span>
+            <span>{{ detailsCard.expiryDate || '—' }}</span>
+          </div>
+        </div>
+
+        <dl class="detail-grid" style="margin-top: 18px;">
+          <div class="detail-item"><dt>Status</dt>
+            <dd><span [class]="'badge ' + getStatusClass(detailsCard.status)">{{ detailsCard.status }}</span></dd>
+          </div>
+          <div class="detail-item"><dt>Wallet</dt><dd>#{{ detailsCard.walletId || walletId }}</dd></div>
+          <div class="detail-item"><dt>CVV</dt><dd>{{ revealNumber ? (detailsCard.cvv || '—') : '•••' }}</dd></div>
+          <div class="detail-item"><dt>Created</dt>
+            <dd>{{ detailsCard.createdAt ? (detailsCard.createdAt | date:'medium') : '—' }}</dd>
+          </div>
+        </dl>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="toggleReveal()">
+          {{ revealNumber ? 'Hide details' : 'Reveal details' }}
+        </button>
+        <button class="btn btn--primary" type="button" (click)="closeDetails()">Close</button>
+      </div>
+    </div>
+  </div>
+
+</app-page-layout>

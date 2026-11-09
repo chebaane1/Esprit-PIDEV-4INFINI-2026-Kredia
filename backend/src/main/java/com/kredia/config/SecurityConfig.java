@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpStatus;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -43,7 +45,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/investments/market/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/v3/api-docs").permitAll()
                 .requestMatchers("/api/user/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/user/agent/**").hasRole("AGENT")
+                .requestMatchers("/api/user/agent/**").hasAnyRole("ADMIN", "AGENT")
                 .requestMatchers("/api/user/client/**").hasRole("CLIENT")
                 .requestMatchers("/api/user/**").authenticated()
                 .requestMatchers("/admin/**").authenticated()

@@ -1,36 +1,249 @@
-<section class="user-page">
-  <header>
-    <h1>Users</h1>
-    <p>Manage all registered users and their statuses.</p>
-  </header>
+<app-page-layout
+  eyebrow="User Management"
+  title="Users"
+  accent="Management"
+  subtitle="Create, update and moderate every account of the platform."
+  badgeValue="Admin"
+  badgeLabel="Portal">
 
-  <div class="alert error" *ngIf="error">{{ error }}</div>
+  <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+  <div class="alert alert--success" *ngIf="success">{{ success }}</div>
 
-  <div class="table-responsive" *ngIf="!loading || users.length > 0">
-    <table>
+  <div class="panel-header ds-header">
+    <div>
+      <h2 class="panel-title">User directory</h2>
+      <p class="panel-subtitle">
+        {{ totalElements }} account(s) · filter by role, status or email.
+      </p>
+    </div>
+    <div class="header-actions" *ngIf="isAdmin">
+      <button class="btn btn--request" type="button" (click)="toggleCreate()">
+        {{ showCreate ? 'Cancel' : '+ New user' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar__search">
+      <input class="input" type="search" placeholder="Search by email…"
+             [(ngModel)]="filterEmail" (keyup.enter)="applyFilters()" />
+    </div>
+    <select class="select" [(ngModel)]="filterRole">
+      <option value="">All roles</option>
+      <option value="CLIENT">CLIENT</option>
+      <option value="AGENT">AGENT</option>
+      <option value="ADMIN">ADMIN</option>
+      <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+    </select>
+    <select class="select" [(ngModel)]="filterStatus">
+      <option value="">All statuses</option>
+      <option value="ACTIVE">ACTIVE</option>
+      <option value="INACTIVE">INACTIVE</option>
+      <option value="SUSPENDED">SUSPENDED</option>
+      <option value="BLOCKED">BLOCKED</option>
+    </select>
+    <button class="btn btn--primary btn--small" type="button" (click)="applyFilters()">Search</button>
+    <button class="btn btn--secondary btn--small" type="button" (click)="resetFilters()">Reset</button>
+  </div>
+
+  <p class="loading-state" *ngIf="loading && users.length === 0">Loading users…</p>
+
+  <div class="table-container">
+    <table class="credit-table">
       <thead>
         <tr>
           <th>ID</th>
           <th>Name</th>
           <th>Email</th>
+          <th>Phone</th>
           <th>Role</th>
           <th>Status</th>
           <th>Created</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let u of users">
-          <td>{{ u.userId }}</td>
-          <td>{{ u.firstName }} {{ u.lastName }}</td>
+        <tr *ngFor="let u of users; trackBy: trackById">
+          <td class="cell-id">{{ u.id }}</td>
+          <td class="cell-name">{{ u.firstName }} {{ u.lastName }}</td>
           <td>{{ u.email }}</td>
-          <td><span [class]="getRoleClass(u.role)">{{ u.role }}</span></td>
-          <td><span [class]="getStatusClass(u.status)">{{ u.status }}</span></td>
-          <td>{{ u.createdAt | date:'short' }}</td>
+          <td>{{ u.phoneNumber || '—' }}</td>
+          <td><span [class]="'badge ' + getRoleClass(u.role || '')">{{ u.role }}</span></td>
+          <td><span [class]="'badge ' + getStatusClass(u.status || '')">{{ u.status }}</span></td>
+          <td>{{ u.createdAt | date:'mediumDate' }}</td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn--small btn--details" type="button" (click)="openDetails(u)">Details</button>
+              <ng-container *ngIf="isAdmin">
+                <button class="btn btn--small btn--edit" type="button" (click)="startEdit(u)">Edit</button>
+                <button class="btn btn--small btn--approve" type="button"
+                        *ngIf="u.status !== 'ACTIVE'" (click)="doAction(u, 'activate')">Activate</button>
+                <button class="btn btn--small btn--warn" type="button"
+                        *ngIf="u.status === 'ACTIVE'" (click)="doAction(u, 'deactivate')">Deactivate</button>
+                <button class="btn btn--small btn--warn" type="button" (click)="doAction(u, 'suspend')">Suspend</button>
+                <button class="btn btn--small btn--danger" type="button" (click)="doAction(u, 'delete')">Delete</button>
+              </ng-container>
+            </div>
+          </td>
         </tr>
       </tbody>
     </table>
-    <p *ngIf="users.length === 0 && !loading">No users found.</p>
+    <p class="table-empty" *ngIf="users.length === 0 && !loading">No users match the current filters.</p>
   </div>
 
-  <p *ngIf="loading && users.length === 0">Loading...</p>
-</section>
+  <app-pagination
+    [page]="page"
+    [totalPages]="totalPages"
+    [totalElements]="totalElements"
+    (previous)="prevPage()"
+    (next)="nextPage()">
+  </app-pagination>
+
+  <!-- ═══ Create user modal ═══ -->
+  <div class="modal-overlay" *ngIf="showCreate" (click)="toggleCreate()">
+    <div class="modal-box modal-box--lg" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Create user</h2>
+        <button class="modal-close" type="button" (click)="toggleCreate()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="createForm" (ngSubmit)="submitCreate()" class="form-grid">
+          <div class="field">
+            <label>Email</label>
+            <input type="email" formControlName="email" placeholder="name@company.com" />
+            <small *ngIf="createForm.controls.email.touched && createForm.controls.email.invalid">Valid email required.</small>
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input type="text" formControlName="phoneNumber" placeholder="+216 ..." />
+            <small *ngIf="createForm.controls.phoneNumber.touched && createForm.controls.phoneNumber.invalid">Phone required.</small>
+          </div>
+          <div class="field">
+            <label>First name</label>
+            <input type="text" formControlName="firstName" />
+            <small *ngIf="createForm.controls.firstName.touched && createForm.controls.firstName.invalid">First name required.</small>
+          </div>
+          <div class="field">
+            <label>Last name</label>
+            <input type="text" formControlName="lastName" />
+            <small *ngIf="createForm.controls.lastName.touched && createForm.controls.lastName.invalid">Last name required.</small>
+          </div>
+          <div class="field">
+            <label>Role</label>
+            <select formControlName="role">
+              <option value="CLIENT">CLIENT</option>
+              <option value="AGENT">AGENT</option>
+              <option value="ADMIN">ADMIN</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select formControlName="status">
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+              <option value="SUSPENDED">SUSPENDED</option>
+            </select>
+          </div>
+          <div class="field field--full">
+            <label>Password</label>
+            <input type="password" formControlName="password" placeholder="At least 6 characters" />
+            <small *ngIf="createForm.controls.password.touched && createForm.controls.password.invalid">Min 6 characters.</small>
+          </div>
+        </form>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="toggleCreate()">Cancel</button>
+        <button class="btn btn--primary" type="button" (click)="submitCreate()" [disabled]="loading">
+          {{ loading ? 'Creating…' : 'Create user' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Edit user modal ═══ -->
+  <div class="modal-overlay" *ngIf="editId !== null" (click)="cancelEdit()">
+    <div class="modal-box modal-box--lg" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Edit user #{{ editId }}</h2>
+        <button class="modal-close" type="button" (click)="cancelEdit()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="editForm" (ngSubmit)="saveEdit()" class="form-grid">
+          <div class="field">
+            <label>Email</label>
+            <input type="email" formControlName="email" />
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input type="text" formControlName="phoneNumber" />
+          </div>
+          <div class="field">
+            <label>First name</label>
+            <input type="text" formControlName="firstName" />
+          </div>
+          <div class="field">
+            <label>Last name</label>
+            <input type="text" formControlName="lastName" />
+          </div>
+          <div class="field">
+            <label>Role</label>
+            <select formControlName="role">
+              <option value="CLIENT">CLIENT</option>
+              <option value="AGENT">AGENT</option>
+              <option value="ADMIN">ADMIN</option>
+              <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select formControlName="status">
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+              <option value="SUSPENDED">SUSPENDED</option>
+              <option value="BLOCKED">BLOCKED</option>
+            </select>
+          </div>
+          <div class="field field--full">
+            <label>New password (optional)</label>
+            <input type="password" formControlName="password" placeholder="Leave empty to keep current password" />
+          </div>
+        </form>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="cancelEdit()">Cancel</button>
+        <button class="btn btn--primary" type="button" (click)="saveEdit()" [disabled]="loading">
+          {{ loading ? 'Saving…' : 'Save changes' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ User details modal ═══ -->
+  <div class="modal-overlay" *ngIf="detailsUser" (click)="closeDetails()">
+    <div class="modal-box" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Profile — {{ detailsUser.firstName }} {{ detailsUser.lastName }}</h2>
+        <button class="modal-close" type="button" (click)="closeDetails()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <dl class="detail-grid">
+          <div class="detail-item"><dt>User ID</dt><dd>#{{ detailsUser.id }}</dd></div>
+          <div class="detail-item"><dt>Email</dt><dd>{{ detailsUser.email }}</dd></div>
+          <div class="detail-item"><dt>Phone</dt><dd>{{ detailsUser.phoneNumber || '—' }}</dd></div>
+          <div class="detail-item"><dt>Role</dt><dd><span [class]="'badge ' + getRoleClass(detailsUser.role || '')">{{ detailsUser.role }}</span></dd></div>
+          <div class="detail-item"><dt>Status</dt><dd><span [class]="'badge ' + getStatusClass(detailsUser.status || '')">{{ detailsUser.status }}</span></dd></div>
+          <div class="detail-item"><dt>Email verified</dt><dd>{{ detailsUser.emailVerified ? 'Yes' : 'No' }}</dd></div>
+          <div class="detail-item"><dt>Created</dt><dd>{{ detailsUser.createdAt ? (detailsUser.createdAt | date:'medium') : '—' }}</dd></div>
+          <div class="detail-item"><dt>Updated</dt><dd>{{ detailsUser.updatedAt ? (detailsUser.updatedAt | date:'medium') : '—' }}</dd></div>
+          <div class="detail-item"><dt>Address</dt><dd>{{ detailsUser.address || '—' }}</dd></div>
+          <div class="detail-item"><dt>Assigned agent</dt><dd>{{ detailsUser.assignedAgentName || detailsUser.assignedAgentId || '—' }}</dd></div>
+        </dl>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="closeDetails()">Close</button>
+        <button class="btn btn--primary" type="button" *ngIf="isAdmin" (click)="closeDetails(); startEdit(detailsUser!)">Edit profile</button>
+      </div>
+    </div>
+  </div>
+
+</app-page-layout>

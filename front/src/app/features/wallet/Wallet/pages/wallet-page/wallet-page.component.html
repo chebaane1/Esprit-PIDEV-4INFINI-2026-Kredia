@@ -1,41 +1,195 @@
-<section class="wallet-page">
-  <header>
-    <h1>Wallets</h1>
-    <p>Manage all user wallets and their statuses.</p>
-  </header>
+<app-page-layout
+  [eyebrow]="isClient ? 'My Wallet' : 'Wallet Management'"
+  [title]="isClient ? 'My Wallet' : 'Wallets'"
+  [accent]="isClient ? 'Balance & Operations' : 'Portfolio'"
+  [subtitle]="isClient ? 'Track your balance, deposit, withdraw and review your operations.' : 'Manage every user wallet, balance and status.'"
+  [badgeValue]="isClient ? 'Personal' : 'Admin'"
+  badgeLabel="Wallet">
 
-  <div class="alert error" *ngIf="error">{{ error }}</div>
+  <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+  <div class="alert alert--success" *ngIf="success">{{ success }}</div>
 
-  <div class="table-responsive" *ngIf="!loading || wallets.length > 0">
-    <table>
+  <div class="stat-grid">
+    <div class="stat-card stat-card--green">
+      <span class="stat-card__label">Total balance</span>
+      <span class="stat-card__value">{{ totalBalance | number:'1.2-2' }}</span>
+    </div>
+    <div class="stat-card stat-card--amber">
+      <span class="stat-card__label">Frozen balance</span>
+      <span class="stat-card__value">{{ totalFrozen | number:'1.2-2' }}</span>
+    </div>
+    <div class="stat-card stat-card--blue">
+      <span class="stat-card__label">Wallets</span>
+      <span class="stat-card__value">{{ wallets.length }}</span>
+    </div>
+  </div>
+
+  <div class="panel-header ds-header">
+    <div>
+      <h2 class="panel-title">{{ isClient ? 'Wallet details' : 'All wallets' }}</h2>
+      <p class="panel-subtitle">{{ filteredWallets.length }} wallet(s) displayed.</p>
+    </div>
+    <div class="header-actions" *ngIf="isAdmin">
+      <button class="btn btn--request" type="button" (click)="toggleCreate()">
+        {{ showCreate ? 'Cancel' : '+ New wallet' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar__search">
+      <input class="input" type="search" placeholder="Search wallet ID, user ID or email…"
+             [(ngModel)]="search" (keyup.enter)="applyFilters()" />
+    </div>
+    <select class="select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+      <option value="">All statuses</option>
+      <option value="ACTIVE">ACTIVE</option>
+      <option value="FROZEN">FROZEN</option>
+      <option value="SUSPENDED">SUSPENDED</option>
+      <option value="CLOSED">CLOSED</option>
+    </select>
+    <button class="btn btn--primary btn--small" type="button" (click)="applyFilters()">Search</button>
+    <button class="btn btn--secondary btn--small" type="button" (click)="resetFilters()">Reset</button>
+  </div>
+
+  <p class="loading-state" *ngIf="loading && wallets.length === 0">Loading wallets…</p>
+
+  <div class="table-container">
+    <table class="credit-table">
       <thead>
         <tr>
-          <th>ID</th>
-          <th>User ID</th>
+          <th>Wallet</th>
+          <th>Owner</th>
           <th>Balance</th>
-          <th>Currency</th>
-          <th>Type</th>
+          <th>Frozen</th>
           <th>Status</th>
+          <th>Updated</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let w of wallets">
-          <td>{{ w.walletId }}</td>
-          <td>{{ w.userId }}</td>
-          <td>{{ w.balance | currency:w.currency:'symbol':'1.2-2' }}</td>
-          <td>{{ w.currency }}</td>
-          <td>{{ w.walletType }}</td>
-          <td><span [class]="getStatusClass(w.status)">{{ w.status }}</span></td>
+        <tr *ngFor="let w of paginatedWallets; trackBy: trackByWalletId">
+          <td class="cell-id">#{{ w.walletId }}</td>
           <td>
-            <button (click)="freeze(w.walletId!)"   [disabled]="w.status === 'FROZEN'">Freeze</button>
-            <button (click)="unfreeze(w.walletId!)" [disabled]="w.status !== 'FROZEN'">Unfreeze</button>
+            <span class="cell-name" *ngIf="w.user?.firstName || w.user?.lastName">
+              {{ w.user?.firstName }} {{ w.user?.lastName }}
+            </span>
+            <span class="cell-client">ID: {{ w.userId ?? w.user?.userId }}</span>
+            <small *ngIf="w.user?.email" class="cell-client"> · {{ w.user?.email }}</small>
+          </td>
+          <td class="cell-amount">{{ w.balance | number:'1.2-2' }}</td>
+          <td>{{ w.frozenBalance | number:'1.2-2' }}</td>
+          <td><span [class]="'badge ' + getStatusClass(w.status)">{{ w.status }}</span></td>
+          <td>{{ (w.updatedAt || w.createdAt) | date:'short' }}</td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn--small btn--details" type="button" (click)="openDetails(w)">Details</button>
+              <ng-container *ngIf="!isAgent">
+                <button class="btn btn--small btn--approve" type="button" (click)="openTransaction(w, 'deposit')">Deposit</button>
+                <button class="btn btn--small btn--warn" type="button" (click)="openTransaction(w, 'withdraw')">Withdraw</button>
+              </ng-container>
+              <button class="btn btn--small btn--secondary" type="button"
+                      *ngIf="isAdmin && w.status !== 'FROZEN'" (click)="toggleFreeze(w)">Freeze</button>
+              <button class="btn btn--small btn--approve" type="button"
+                      *ngIf="isAdmin && w.status === 'FROZEN'" (click)="toggleFreeze(w)">Unfreeze</button>
+            </div>
           </td>
         </tr>
       </tbody>
     </table>
-    <p *ngIf="wallets.length === 0 && !loading">No wallets found.</p>
+    <p class="table-empty" *ngIf="filteredWallets.length === 0 && !loading">
+      {{ isClient ? 'No wallet found for your account yet. Please contact an administrator.' : 'No wallets match the current filters.' }}
+    </p>
   </div>
 
-  <p *ngIf="loading && wallets.length === 0">Loading...</p>
-</section>
+  <app-pagination
+    [page]="page"
+    [totalPages]="totalPages"
+    [totalElements]="filteredWallets.length"
+    (previous)="prevPage()"
+    (next)="nextPage()">
+  </app-pagination>
+
+  <!-- ═══ Create wallet modal (admin) ═══ -->
+  <div class="modal-overlay" *ngIf="showCreate && isAdmin" (click)="toggleCreate()">
+    <div class="modal-box modal-box--sm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>New wallet</h2>
+        <button class="modal-close" type="button" (click)="toggleCreate()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>User ID</label>
+          <input class="input" type="number" placeholder="e.g. 42" [(ngModel)]="createUserId" />
+          <small *ngIf="!createUserId">A user can only own one wallet.</small>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="toggleCreate()">Cancel</button>
+        <button class="btn btn--primary" type="button" (click)="createWallet()" [disabled]="creating">
+          {{ creating ? 'Creating…' : 'Create wallet' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Deposit / withdraw modal ═══ -->
+  <div class="modal-overlay" *ngIf="txWallet" (click)="closeTransaction()">
+    <div class="modal-box modal-box--sm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ txMode === 'deposit' ? 'Deposit funds' : 'Withdraw funds' }} — wallet #{{ txWallet.walletId }}</h2>
+        <button class="modal-close" type="button" (click)="closeTransaction()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="stat-card stat-card--green" style="margin-bottom: 16px;">
+          <span class="stat-card__label">Current balance</span>
+          <span class="stat-card__value">{{ txWallet.balance | number:'1.2-2' }}</span>
+        </div>
+        <div class="field">
+          <label>Amount</label>
+          <input class="input" type="number" min="0.01" step="0.01" placeholder="0.00"
+                 [(ngModel)]="txAmount" (keyup.enter)="submitTransaction()" />
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="closeTransaction()">Cancel</button>
+        <button class="btn" type="button"
+                [class.btn--primary]="txMode === 'deposit'"
+                [class.btn--danger]="txMode === 'withdraw'"
+                (click)="submitTransaction()" [disabled]="txLoading">
+          {{ txLoading ? 'Processing…' : (txMode === 'deposit' ? 'Deposit' : 'Withdraw') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Wallet details modal ═══ -->
+  <div class="modal-overlay" *ngIf="detailsWallet" (click)="closeDetails()">
+    <div class="modal-box" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Wallet #{{ detailsWallet.walletId }}</h2>
+        <button class="modal-close" type="button" (click)="closeDetails()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <dl class="detail-grid">
+          <div class="detail-item"><dt>Wallet ID</dt><dd>#{{ detailsWallet.walletId }}</dd></div>
+          <div class="detail-item"><dt>Owner</dt><dd>{{ detailsWallet.user?.firstName || detailsWallet.user?.lastName ? (detailsWallet.user?.firstName + ' ' + (detailsWallet.user?.lastName || '')) : ('User #' + (detailsWallet.userId ?? detailsWallet.user?.userId)) }}</dd></div>
+          <div class="detail-item"><dt>Email</dt><dd>{{ detailsWallet.user?.email || '—' }}</dd></div>
+          <div class="detail-item"><dt>Balance</dt><dd>{{ detailsWallet.balance | number:'1.2-2' }}</dd></div>
+          <div class="detail-item"><dt>Frozen balance</dt><dd>{{ detailsWallet.frozenBalance | number:'1.2-2' }}</dd></div>
+          <div class="detail-item"><dt>Status</dt><dd><span [class]="'badge ' + getStatusClass(detailsWallet.status)">{{ detailsWallet.status }}</span></dd></div>
+          <div class="detail-item"><dt>Created</dt><dd>{{ detailsWallet.createdAt ? (detailsWallet.createdAt | date:'medium') : '—' }}</dd></div>
+          <div class="detail-item"><dt>Updated</dt><dd>{{ detailsWallet.updatedAt ? (detailsWallet.updatedAt | date:'medium') : '—' }}</dd></div>
+        </dl>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="closeDetails()">Close</button>
+        <ng-container *ngIf="!isAgent">
+          <button class="btn btn--primary" type="button" (click)="openTransaction(detailsWallet!, 'deposit'); closeDetails()">Deposit</button>
+          <button class="btn btn--warn" type="button" (click)="openTransaction(detailsWallet!, 'withdraw'); closeDetails()">Withdraw</button>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+</app-page-layout>

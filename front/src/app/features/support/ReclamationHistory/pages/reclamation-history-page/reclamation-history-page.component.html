@@ -1,4 +1,76 @@
-<div class="page-container">
-  <h1>Reclamation History</h1>
-  <p>This is a placeholder for the Reclamation History component.</p>
-</div>
+<app-page-layout
+  eyebrow="Support · Audit"
+  title="Reclamation History"
+  accent="Timeline"
+  subtitle="Trace every status change of a reclamation, who made it and when."
+  badgeValue="History"
+  badgeLabel="Trail">
+
+  <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+
+  <div class="stat-grid">
+    <div class="stat-card stat-card--blue">
+      <span class="stat-card__label">Events</span>
+      <span class="stat-card__value">{{ history.length }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card__label">Reclamation</span>
+      <span class="stat-card__value stat-card__value--small">{{ reclamationId ? ('#' + reclamationId) : 'None' }}</span>
+    </div>
+    <div class="stat-card stat-card--green">
+      <span class="stat-card__label">Last change</span>
+      <span class="stat-card__value stat-card__value--small">
+        {{ latestChange?.changedAt ? (latestChange?.changedAt | date:'short') : '—' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="panel-header ds-header">
+    <div>
+      <h2 class="panel-title">Status timeline</h2>
+      <p class="panel-subtitle">Newest events first.</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="field field--inline">
+      <label for="historyReclamationId">Reclamation</label>
+      <input id="historyReclamationId" class="input" type="number" min="1" placeholder="e.g. 42"
+             [(ngModel)]="reclamationId" (keyup.enter)="loadHistory()" />
+    </div>
+    <div class="toolbar__search">
+      <input class="input" type="search" placeholder="Search note or status…"
+             [(ngModel)]="searchFilter" (keyup.enter)="applyFilters()" />
+    </div>
+    <button class="btn btn--primary btn--small" type="button" (click)="loadHistory()" [disabled]="loading">
+      {{ loading ? 'Loading…' : 'Load history' }}
+    </button>
+    <button class="btn btn--secondary btn--small" type="button" (click)="resetFilters()">Reset</button>
+  </div>
+
+  <p class="loading-state" *ngIf="loading && history.length === 0">Loading history…</p>
+
+  <div class="timeline" *ngIf="history.length > 0">
+    <div class="timeline__item" *ngFor="let h of history; trackBy: trackByHistoryId">
+      <span class="timeline__dot"></span>
+      <div class="timeline__card">
+        <div class="timeline__head">
+          <div class="timeline__status">
+            <span class="badge" *ngIf="h.oldStatus" [class]="'badge ' + getStatusClass(h.oldStatus)">{{ h.oldStatus }}</span>
+            <span class="timeline__arrow" *ngIf="h.oldStatus && h.newStatus">→</span>
+            <span class="badge" *ngIf="h.newStatus" [class]="'badge ' + getStatusClass(h.newStatus)">{{ h.newStatus }}</span>
+          </div>
+          <span class="timeline__time">{{ h.changedAt ? (h.changedAt | date:'medium') : '—' }}</span>
+        </div>
+        <p class="timeline__note">{{ h.note || 'Status updated.' }}</p>
+        <span class="timeline__actor">Changed by user #{{ h.actorUserId }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="history.length === 0 && !loading">
+    <h3>{{ reclamationId ? 'No history for this reclamation' : 'Select a reclamation' }}</h3>
+    <p>{{ reclamationId ? 'No status change has been recorded yet.' : 'Enter a reclamation ID above to display its timeline.' }}</p>
+  </div>
+
+</app-page-layout>

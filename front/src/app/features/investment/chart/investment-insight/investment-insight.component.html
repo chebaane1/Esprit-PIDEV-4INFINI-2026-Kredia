@@ -1,0 +1,277 @@
+<section class="gemini-analysis-block">
+  <div class="gemini-header">
+    <div class="gemini-header__title">
+      <h2>AI Analysis </h2>
+      <span class="gemini-header__icon">✨</span>
+    </div>
+    <button
+      type="button"
+      class="gemini-header__refresh"
+      [disabled]="loading()"
+      [class.is-loading]="loading()"
+      (click)="refresh.emit()"
+      [title]="loading() ? 'Loading...' : 'Refresh analysis'">
+      @if (loading()) {
+        <span class="spinner"></span>
+      } @else {
+        <span>↻</span>
+      }
+    </button>
+  </div>
+
+  @if (error()) {
+    <div class="gemini-error">
+      <p>{{ error() }}</p>
+      <button type="button" class="gemini-error__retry" (click)="refresh.emit()">Retry</button>
+    </div>
+  } @else if (loading()) {
+    <div class="gemini-skeleton">
+      <div class="skeleton skeleton--gemini-banner"></div>
+      <div class="skeleton skeleton--gemini-card"></div>
+      <div class="skeleton skeleton--gemini-card"></div>
+      <div class="skeleton skeleton--gemini-card"></div>
+    </div>
+  } @else if (analysis()) {
+    <div class="gemini-banner" [ngClass]="getTrendBadgeClass(analysis().sentiment)">
+      <div class="gemini-banner__sentiment">
+        <span class="gemini-banner__label">Sentiment global</span>
+        <span class="gemini-banner__value">{{ sentimentLabel() }}</span>
+      </div>
+
+      <div class="gemini-banner__confidence">
+        <span class="gemini-banner__label">Confiance</span>
+        <span class="gemini-banner__value">{{ analysis().confidence_score }}</span>
+      </div>
+
+      <div class="gemini-banner__date">
+        <span class="gemini-banner__label">Updated</span>
+        <span>{{ analysis().as_of | date:'dd MMM yyyy' }}</span>
+        <span>{{ analysis().as_of | date:'HH:mm' }}</span>
+      </div>
+    </div>
+
+    <div class="gemini-accordion">
+      <button
+        type="button"
+        class="gemini-accordion__toggle"
+        [class.is-open]="detailOpen()"
+        (click)="detailOpen.set(!detailOpen())">
+        <span class="gemini-accordion__label">View full details</span>
+        <span class="gemini-accordion__icon">{{ detailOpen() ? '▼' : '►' }}</span>
+      </button>
+
+      @if (detailOpen()) {
+        <div class="gemini-accordion__content">
+          <article class="gemini-summary-card">
+            <div class="gemini-summary-card__header">
+              <h3>Strategic summary</h3>
+              <span>Equity, bond, and macro markets</span>
+            </div>
+            <p>{{ analysis().overall_summary }}</p>
+          </article>
+
+          <div class="gemini-kpi-grid">
+            <article class="gemini-kpi-card">
+              <h3 class="gemini-kpi-card__title">Indices majeurs</h3>
+              <div class="gemini-indices-list">
+                @for (indexItem of analysis().market_equities?.major_indices || []; track indexItem.name) {
+                  <div class="gemini-index-row">
+                    <div class="gemini-index-row__meta">
+                      <strong>{{ indexItem.name }}</strong>
+                      <span class="gemini-index-row__trend" [ngClass]="getTrendBadgeClass(indexItem.trend)">{{ indexItem.trend }}</span>
+                    </div>
+                    <div class="gemini-index-row__values">
+                      <span [class.is-positive]="(indexItem.change_1d_pct || 0) >= 0" [class.is-negative]="(indexItem.change_1d_pct || 0) < 0">
+                        1D {{ formatPercentage(indexItem.change_1d_pct) }}
+                      </span>
+                      <span>YTD {{ formatPercentage(indexItem.change_ytd_pct) }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+            </article>
+
+            <article class="gemini-kpi-card">
+              <h3 class="gemini-kpi-card__title">Bond market</h3>
+              <p class="gemini-kpi-card__content">{{ analysis().bond_market?.summary || '-' }}</p>
+              <div class="gemini-bond-table" *ngIf="analysis().bond_market?.yield_curves?.length">
+                <div class="gemini-bond-table__head">
+                  <span>Region</span>
+                  <span>2Y</span>
+                  <span>10Y</span>
+                  <span>Courbe</span>
+                </div>
+                @for (curve of analysis().bond_market.yield_curves; track curve.region) {
+                  <div class="gemini-bond-table__row">
+                    <span>{{ curve.region }}</span>
+                    <span>{{ formatYield(curve.y2) }}</span>
+                    <span>{{ formatYield(curve.y10) }}</span>
+                    <span class="gemini-bond-table__shape">{{ curve.shape }} / {{ curve.slope_bps }} bps</span>
+                  </div>
+                }
+              </div>
+            </article>
+
+            <article class="gemini-kpi-card">
+              <h3 class="gemini-kpi-card__title">Macro & policy</h3>
+              <div class="gemini-macro-block">
+                <div class="gemini-macro-block__item">
+                  <span>Inflation</span>
+                  <strong>{{ analysis().macro_political_factors?.inflation?.trend || '-' }}</strong>
+                </div>
+                <div class="gemini-macro-block__item">
+                  <span>Emploi</span>
+                  <strong>{{ analysis().macro_political_factors?.employment?.trend || '-' }}</strong>
+                </div>
+              </div>
+
+              <div class="gemini-chip-list" *ngIf="analysis().macro_political_factors?.geopolitics?.length">
+                @for (risk of analysis().macro_political_factors.geopolitics; track risk.theme) {
+                  <span class="gemini-chip" [ngClass]="getSeverityClass(risk.severity)">{{ risk.theme }}</span>
+                }
+              </div>
+            </article>
+          </div>
+
+          <div class="gemini-grid-2">
+            <article class="gemini-panel-box">
+              <h3>6-12 month scenario</h3>
+              <div class="gemini-scenario">
+                <strong>Base case</strong>
+                <p>{{ analysis().outlook_6_12m?.base_case || analysis().outlook }}</p>
+              </div>
+              <div class="gemini-scenario">
+                <strong>Bull case</strong>
+                <p>{{ analysis().outlook_6_12m?.bull_case || '-' }}</p>
+              </div>
+              <div class="gemini-scenario">
+                <strong>Bear case</strong>
+                <p>{{ analysis().outlook_6_12m?.bear_case || '-' }}</p>
+              </div>
+            </article>
+
+            <article class="gemini-panel-box">
+              <h3>Risks & recommendations</h3>
+
+              <div class="gemini-subsection">
+                <span class="gemini-subsection__label">Risk flags</span>
+                <div class="gemini-chip-list">
+                  @for (flag of analysis().risk_flags || []; track $index) {
+                    <span class="gemini-chip is-neutral">{{ flag }}</span>
+                  }
+                </div>
+              </div>
+
+              <div class="gemini-subsection" *ngIf="analysis().recommendations?.length">
+                <span class="gemini-subsection__label">Suggested actions</span>
+                <ul class="gemini-recommendations__list">
+                  @for (rec of analysis().recommendations.slice(0, 4); track $index) {
+                    <li class="gemini-recommendations__item">{{ rec }}</li>
+                  }
+                </ul>
+              </div>
+            </article>
+          </div>
+
+          <div class="gemini-detail-section" *ngIf="analysis().market_equities?.tech_ai_vs_traditional">
+            <h4>Tech / IA vs traditionnels</h4>
+            <div class="gemini-compare-grid">
+              <div>
+                <strong>Tech & IA</strong>
+                <p>{{ analysis().market_equities.tech_ai_vs_traditional.tech_ai?.momentum }}</p>
+                <p>{{ analysis().market_equities.tech_ai_vs_traditional.tech_ai?.valuation_signal }}</p>
+              </div>
+              <div>
+                <strong>Traditionnels</strong>
+                <p>{{ analysis().market_equities.tech_ai_vs_traditional.traditional?.momentum }}</p>
+                <p>{{ analysis().market_equities.tech_ai_vs_traditional.traditional?.valuation_signal }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="gemini-detail-section" *ngIf="analysis().macro_political_factors?.policy_events?.length">
+            <h4>Policy events</h4>
+            <ul>
+              @for (event of analysis().macro_political_factors.policy_events; track $index) {
+                <li>{{ event }}</li>
+              }
+            </ul>
+          </div>
+
+          <div class="gemini-detail-section" *ngIf="analysis().macro_political_factors?.notes">
+            <h4>Notes macro</h4>
+            <p>{{ analysis().macro_political_factors.notes }}</p>
+          </div>
+
+          <div class="gemini-detail-meta">
+            <span>Source: {{ analysis().source || 'Gemini AI' }}</span>
+            <span>Model: {{ analysis().model || '-' }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>
+
+<section class="gemini-portfolio-top">
+  <div class="gemini-portfolio-top__header">
+    <div class="gemini-portfolio-top__title-row">
+      <h3>Top positions</h3>
+      <a routerLink="/investissement/positions" class="gemini-portfolio-top__view-all" title="View full portfolio">
+        <span class="gemini-portfolio-top__view-all-text">View all</span>
+        <span class="gemini-portfolio-top__arrow">→</span>
+      </a>
+    </div>
+    <span class="gemini-portfolio-top__total">Total: {{ totalValue() | number:'1.2-2' }} EUR</span>
+  </div>
+
+  @if (positionsLoading()) {
+    <div class="gemini-portfolio-top__loading" aria-label="Loading top positions">
+      <div class="gemini-portfolio-top__loading-head">
+        <span class="skeleton skeleton--line skeleton--short"></span>
+        <span class="skeleton skeleton--line skeleton--medium"></span>
+      </div>
+
+      <div class="gemini-portfolio-top__loading-table">
+        <div class="gemini-portfolio-top__loading-row" *ngFor="let _ of [1,2,3,4,5]">
+          <span class="skeleton skeleton--line skeleton--short"></span>
+          <span class="skeleton skeleton--line skeleton--medium"></span>
+          <span class="skeleton skeleton--line skeleton--short"></span>
+          <span class="skeleton skeleton--line skeleton--short"></span>
+          <span class="skeleton skeleton--line skeleton--medium"></span>
+        </div>
+      </div>
+    </div>
+  } @else if (positions().length > 0) {
+    <div class="gemini-portfolio-top__table">
+      <div class="gemini-portfolio-top__head">
+        <span>Action</span>
+        <span>Value</span>
+        <span>P/L (€)</span>
+        <span>P/L (%)</span>
+        <span>Part</span>
+      </div>
+
+      @for (position of positions(); track position.assetSymbol) {
+        <div class="gemini-portfolio-top__row">
+          <span class="gemini-portfolio-top__symbol">{{ position.assetSymbol }}</span>
+          <span>{{ position.currentValue | number:'1.2-2' }} EUR</span>
+          <span [class.is-positive]="position.profitLossDollars >= 0" [class.is-negative]="position.profitLossDollars < 0">
+            {{ position.profitLossDollars | number:'1.2-2' }}
+          </span>
+          <span [class.is-positive]="position.profitLossPercentage >= 0" [class.is-negative]="position.profitLossPercentage < 0">
+            {{ formatPercentage(position.profitLossPercentage) }}
+          </span>
+          <div class="gemini-portfolio-top__share">
+            <span>{{ position.portfolioSharePct | number:'1.2-2' }}%</span>
+            <div class="gemini-portfolio-top__bar">
+              <div class="gemini-portfolio-top__bar-fill" [style.width.%]="position.portfolioSharePct"></div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="gemini-portfolio-top__empty">No portfolio positions available.</div>
+  }
+</section>

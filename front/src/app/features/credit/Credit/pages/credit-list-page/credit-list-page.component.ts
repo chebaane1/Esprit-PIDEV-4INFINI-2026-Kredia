@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin, of, catchError } from 'rxjs';
 import { CreditVm } from '../../vm/credit.vm';
-import { Credit, DemandeCredit } from '../../models/credit.model';
+import { ApplicationPredictionResponse, Credit, DemandeCredit } from '../../models/credit.model';
 import { downloadBlob } from '../../../../../core/utils/download.util';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { KycLoanVm } from '../../../KycLoan/vm/kyc-loan.vm';
@@ -32,6 +32,10 @@ export class CreditListPageComponent implements OnInit {
   loading = false;
   error: string | null = null;
   viewMode: 'ALL' | 'PENDING' = 'ALL';
+
+  // ── ML Prediction State ────────────────────────────────
+  mlPredictions: Record<number, ApplicationPredictionResponse> = {};
+  mlLoading: Record<number, boolean> = {};
 
   // ── Search / filter state ──────────────────────────────
   filterCreditId  = 'ALL';
@@ -116,14 +120,20 @@ export class CreditListPageComponent implements OnInit {
     this.rejectionReasonText = '';
     this.cdr.markForCheck();
 
-    this.kycVm.getByDemandeId(d.creditId!).subscribe({
-      next: (docs) => {
+    forkJoin({
+      docs: this.kycVm.getByDemandeId(d.creditId!).pipe(catchError(() => of([]))),
+      ml: this.vm.predictApplication(d.creditId!).pipe(catchError(() => of(null)))
+    }).subscribe({
+      next: ({ docs, ml }) => {
         let reasons: string[] = [];
         if (d.isFeePaid === false) {
           reasons.push('Application fees not paid');
         }
         if (docs && docs.some(doc => doc.verifiedStatus === 'REJECTED')) {
           reasons.push('KYC documents rejected');
+        }
+        if (ml && ml.status === 1) {
+          reasons.push(`AI assessed risk as ${ml.risk_level} (Default probability: ${(ml.default_probability * 100).toFixed(0)}%)`);
         }
         if (reasons.length === 0) {
           reasons.push('Rejected by administrator');
@@ -261,6 +271,26 @@ export class CreditListPageComponent implements OnInit {
     this.vm.exportPdf(id).subscribe({
       next:  (blob) => downloadBlob(blob, `statistiques_credit_${id}.pdf`),
       error: ()     => { this.error = `PDF export failed for credit #${id}.`; this.cdr.markForCheck(); }
+    });
+  }
+
+  // ── ML Application Prediction ─────────────────────────
+  runMlPrediction(demande: DemandeCredit): void {
+    const id = demande.creditId!;
+    this.mlLoading[id] = true;
+    this.cdr.markForCheck();
+
+    this.vm.predictApplication(id).subscribe({
+      next: (pred) => {
+        this.mlPredictions[id] = pred;
+        this.mlLoading[id] = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.mlLoading[id] = false;
+        this.error = `ML prediction service unavailable for application #${id}.`;
+        this.cdr.markForCheck();
+      }
     });
   }
 

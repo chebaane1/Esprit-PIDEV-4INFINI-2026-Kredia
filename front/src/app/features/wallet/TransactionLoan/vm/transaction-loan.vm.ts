@@ -10,8 +10,4 @@ export class TransactionLoanVm {
   findAll(): Observable<TransactionLoan[]> {
     return this.api.findAll();
   }
-
-  findByCredit(creditId: number): Observable<TransactionLoan[]> {
-    return this.api.findByCredit(creditId);
-  }
 }

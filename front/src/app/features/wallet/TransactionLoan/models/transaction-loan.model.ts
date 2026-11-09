@@ -1,11 +1,23 @@
-export type LoanTransactionType = 'DISBURSEMENT' | 'REPAYMENT' | 'PENALTY' | 'INTEREST';
+export type TransactionStatus =
+  | 'PENDING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'REVERSED'
+  | 'SUSPECTED_FRAUD';
+
+export interface WalletRef {
+  walletId: number;
+}
 
 export interface TransactionLoan {
-  loanTransactionId?: number;
-  creditId: number;
-  walletId: number;
+  transactionId?: number;
+  sourceWallet?: WalletRef | { walletId: number } | null;
+  destinationWallet?: WalletRef | { walletId: number } | null;
   amount: number;
-  type: LoanTransactionType;
+  status?: TransactionStatus;
+  reference?: string;
   description?: string;
-  createdAt?: string;
+  transactionDate?: string;
+  dtype?: string;
+  echeanceId?: number;
 }

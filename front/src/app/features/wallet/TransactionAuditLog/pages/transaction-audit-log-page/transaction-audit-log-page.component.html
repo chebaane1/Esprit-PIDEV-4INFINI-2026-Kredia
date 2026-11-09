@@ -1,4 +1,110 @@
-<div class="page-container">
-  <h1>Transaction Audit Log</h1>
-  <p>This is a placeholder for the Transaction Audit Log component.</p>
-</div>
+<app-page-layout
+  eyebrow="Wallet · Security"
+  title="Audit Logs"
+  accent="Blockchain trail"
+  subtitle="Immutable audit trail of wallet and transaction operations, linked through chained hashes."
+  badgeValue="Audit"
+  badgeLabel="Trail">
+
+  <div class="alert alert--error" *ngIf="error">{{ error }}</div>
+
+  <div class="stat-grid">
+    <div class="stat-card stat-card--blue">
+      <span class="stat-card__label">Audit entries</span>
+      <span class="stat-card__value">{{ filteredLogs.length }}</span>
+    </div>
+    <div class="stat-card stat-card--green">
+      <span class="stat-card__label">Chained blocks</span>
+      <span class="stat-card__value">{{ allLogs.length }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-card__label">Latest entry</span>
+      <span class="stat-card__value stat-card__value--small">
+        {{ logs.length ? (logs[0].createdAt | date:'short') : '—' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="panel-header ds-header">
+    <div>
+      <h2 class="panel-title">Transaction audit logs</h2>
+      <p class="panel-subtitle">Every write operation is hashed and chained for verification.</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="toolbar__search">
+      <input class="input" type="search" placeholder="Search data, previous or blockchain hash…"
+             [(ngModel)]="hashFilter" (keyup.enter)="applyFilters()" />
+    </div>
+    <input class="input" type="number" min="1" placeholder="Transaction ID" [(ngModel)]="transactionIdFilter" />
+    <button class="btn btn--primary btn--small" type="button" (click)="applyFilters()">Search</button>
+    <button class="btn btn--secondary btn--small" type="button" (click)="resetFilters()">Reset</button>
+  </div>
+
+  <p class="loading-state" *ngIf="loading && logs.length === 0">Loading audit logs…</p>
+
+  <div class="table-container">
+    <table class="credit-table">
+      <thead>
+        <tr>
+          <th>Log</th>
+          <th>Transaction</th>
+          <th>Previous hash</th>
+          <th>Data hash</th>
+          <th>Blockchain tx</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let l of logs; trackBy: trackByLogId">
+          <td class="cell-id">#{{ l.logId }}</td>
+          <td>{{ l.transactionId ? ('#' + l.transactionId) : '—' }}</td>
+          <td class="cell-hash">{{ shortHash(l.previousHash) }}</td>
+          <td class="cell-hash">{{ shortHash(l.dataHash) }}</td>
+          <td class="cell-hash">{{ shortHash(l.blockchainTxHash) }}</td>
+          <td>{{ l.createdAt ? (l.createdAt | date:'short') : '—' }}</td>
+          <td>
+            <div class="table-actions">
+              <button class="btn btn--small btn--details" type="button" (click)="openDetails(l)">Details</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="table-empty" *ngIf="logs.length === 0 && !loading">No audit logs match the current filters.</p>
+  </div>
+
+  <app-pagination
+    [page]="page"
+    [totalPages]="totalPages"
+    [totalElements]="filteredLogs.length"
+    (previous)="prevPage()"
+    (next)="nextPage()">
+  </app-pagination>
+
+  <!-- ═══ Audit log details ═══ -->
+  <div class="modal-overlay" *ngIf="detailsLog" (click)="closeDetails()">
+    <div class="modal-box" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Audit log #{{ detailsLog.logId }}</h2>
+        <button class="modal-close" type="button" (click)="closeDetails()" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <dl class="detail-grid">
+          <div class="detail-item"><dt>Log ID</dt><dd>#{{ detailsLog.logId }}</dd></div>
+          <div class="detail-item"><dt>Transaction</dt><dd>{{ detailsLog.transactionId ? ('#' + detailsLog.transactionId) : '—' }}</dd></div>
+          <div class="detail-item"><dt>Created</dt><dd>{{ detailsLog.createdAt ? (detailsLog.createdAt | date:'medium') : '—' }}</dd></div>
+          <div class="detail-item detail-item--full"><dt>Previous hash</dt><dd class="hash-value">{{ detailsLog.previousHash || '—' }}</dd></div>
+          <div class="detail-item detail-item--full"><dt>Data hash</dt><dd class="hash-value">{{ detailsLog.dataHash || '—' }}</dd></div>
+          <div class="detail-item detail-item--full"><dt>Blockchain transaction hash</dt><dd class="hash-value">{{ detailsLog.blockchainTxHash || '—' }}</dd></div>
+        </dl>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn--secondary" type="button" (click)="closeDetails()">Close</button>
+      </div>
+    </div>
+  </div>
+
+</app-page-layout>

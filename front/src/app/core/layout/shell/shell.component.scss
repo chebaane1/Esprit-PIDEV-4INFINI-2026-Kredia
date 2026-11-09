@@ -17,6 +17,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
   background: var(--bg-secondary);
   transition: margin-left 0.3s ease, background-color 0.3s ease;
 }
@@ -31,11 +32,26 @@
   flex: 1;
   padding: 28px clamp(16px, 2.5vw, 36px);
   overflow-y: auto;
+  min-width: 0;
+}
+
+/* Mobile drawer backdrop */
+.sidebar-backdrop {
+  display: none;
 }
 
 /* Responsive */
-@media (max-width: 920px) {
+@media (max-width: 1024px) {
   .main-area {
     margin-left: 0;
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 99;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(1px);
   }
 }

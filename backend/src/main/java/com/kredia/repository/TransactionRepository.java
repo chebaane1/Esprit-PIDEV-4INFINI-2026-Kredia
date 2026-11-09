@@ -13,6 +13,7 @@ import java.util.List;
 public interface    TransactionRepository extends JpaRepository<Transaction, Long> {
     List<Transaction> findBySourceWallet_WalletId(Long walletId);
     List<Transaction> findByDestinationWallet_WalletId(Long walletId);
+    List<Transaction> findBySourceWallet_User_IdOrDestinationWallet_User_Id(Long sourceUserId, Long destinationUserId);
 
     // Fraud detection queries
     List<Transaction> findByStatus(com.kredia.enums.TransactionStatus status);

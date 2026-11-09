@@ -1,11 +1,10 @@
-export type CardStatus = 'ACTIVE' | 'BLOCKED' | 'EXPIRED' | 'CANCELLED';
-
 export interface VirtualCard {
-  cardId?: number;
-  walletId: number;
-  userId: number;
-  maskedNumber: string;
+  id?: number;
+  walletId?: number;
+  cardNumber: string;
+  cvv?: string;
   expiryDate: string;
-  status: CardStatus;
+  provider?: string;
+  status: string;
   createdAt?: string;
 }

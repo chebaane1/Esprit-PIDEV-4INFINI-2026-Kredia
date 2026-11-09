@@ -28,6 +28,16 @@ public class WalletService {
         this.auditLogService = auditLogService;
     }
 
+    public List<Wallet> getAllWallets() {
+        return walletRepository.findAll();
+    }
+
+    public List<Wallet> getWalletsByUser(Long userId) {
+        return walletRepository.findByUser_Id(userId)
+                .map(java.util.List::of)
+                .orElse(java.util.List.of());
+    }
+
     public Wallet createWallet(Wallet wallet) {
         if (wallet.getUser() != null && wallet.getUser().getUserId() != null) {
             long userId = wallet.getUser().getUserId();
@@ -161,5 +171,49 @@ public class WalletService {
 
         // Audit unfreeze action
         auditWalletAction(updatedWallet, "UNFREEZE");
+    }
+
+    public Wallet deposit(Long walletId, java.math.BigDecimal amount) {
+        if (amount == null || amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+
+        if (wallet.getStatus() == WalletStatus.FROZEN) {
+            throw new IllegalStateException("Wallet is frozen, deposits are not allowed");
+        }
+
+        java.math.BigDecimal balance = wallet.getBalance() != null ? wallet.getBalance() : java.math.BigDecimal.ZERO;
+        wallet.setBalance(balance.add(amount));
+        wallet.setUpdatedAt(LocalDateTime.now());
+
+        Wallet updatedWallet = walletRepository.save(wallet);
+        auditWalletAction(updatedWallet, "DEPOSIT:" + amount);
+        return updatedWallet;
+    }
+
+    public Wallet withdraw(Long walletId, java.math.BigDecimal amount) {
+        if (amount == null || amount.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Amount must be greater than zero");
+        }
+        Wallet wallet = walletRepository.findById(walletId)
+                .orElseThrow(() -> new RuntimeException("Wallet not found"));
+
+        if (wallet.getStatus() == WalletStatus.FROZEN) {
+            throw new IllegalStateException("Wallet is frozen, withdrawals are not allowed");
+        }
+
+        java.math.BigDecimal balance = wallet.getBalance() != null ? wallet.getBalance() : java.math.BigDecimal.ZERO;
+        if (balance.compareTo(amount) < 0) {
+            throw new IllegalStateException("Insufficient balance");
+        }
+
+        wallet.setBalance(balance.subtract(amount));
+        wallet.setUpdatedAt(LocalDateTime.now());
+
+        Wallet updatedWallet = walletRepository.save(wallet);
+        auditWalletAction(updatedWallet, "WITHDRAW:" + amount);
+        return updatedWallet;
     }
 }

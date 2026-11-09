@@ -1,6 +1,7 @@
 package com.kredia.service;
 
 import com.kredia.dto.reclamation.*;
+import com.kredia.enums.ReclamationCategory;
 import com.kredia.enums.ReclamationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +23,10 @@ public interface ReclamationService {
     Page<ReclamationResponse> getAll(int page, int size);
 
     Page<ReclamationResponse> getByUser(Long userId, int page, int size);
+
+    Page<ReclamationResponse> search(ReclamationStatus status, ReclamationCategory category, String query, int page, int size);
+
+    Page<ReclamationResponse> searchByUser(Long userId, ReclamationStatus status, ReclamationCategory category, String query, int page, int size);
 
     Page<ReclamationResponse> getByStatus(ReclamationStatus status, int page, int size);
 

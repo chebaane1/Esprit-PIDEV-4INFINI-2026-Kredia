@@ -11,8 +11,16 @@ export class WalletVm {
     return this.api.findAll();
   }
 
+  findMine(): Observable<Wallet[]> {
+    return this.api.findMine();
+  }
+
   findByUser(userId: number): Observable<Wallet[]> {
     return this.api.findByUser(userId);
+  }
+
+  create(userId: number): Observable<Wallet> {
+    return this.api.create(userId);
   }
 
   freeze(id: number): Observable<Wallet> {
@@ -21,5 +29,13 @@ export class WalletVm {
 
   unfreeze(id: number): Observable<Wallet> {
     return this.api.unfreeze(id);
+  }
+
+  deposit(id: number, amount: number): Observable<Wallet> {
+    return this.api.deposit(id, amount);
+  }
+
+  withdraw(id: number, amount: number): Observable<Wallet> {
+    return this.api.withdraw(id, amount);
   }
 }

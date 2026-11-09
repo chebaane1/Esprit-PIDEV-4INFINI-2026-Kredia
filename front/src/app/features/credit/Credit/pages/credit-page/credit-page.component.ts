@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit }
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { CreditVm } from '../../vm/credit.vm';
-import { DemandeCredit, RepaymentType } from '../../models/credit.model';
+import { ApplicationPredictionResponse, DemandeCredit, RepaymentType } from '../../models/credit.model';
 import { AuthService } from '../../../../../core/services/auth.service';
 
 @Component({
@@ -15,11 +15,12 @@ export class CreditPageComponent implements OnInit {
   private readonly vm   = inject(CreditVm);
   private readonly cdr  = inject(ChangeDetectorRef);
   private readonly fb   = inject(FormBuilder);
-  private readonly auth = inject(AuthService);
+  readonly auth = inject(AuthService);
 
   submitting = false;
   success: string | null = null;
   error: string | null = null;
+  mlPrediction: ApplicationPredictionResponse | null = null;
 
   readonly repaymentTypes = [
     { value: 'AMORTISSEMENT_CONSTANT' as RepaymentType, label: 'Constant Amortization' },
@@ -95,8 +96,9 @@ export class CreditPageComponent implements OnInit {
     this.vm.createDemande(payload)
       .pipe(finalize(() => { this.submitting = false; this.cdr.markForCheck(); }))
       .subscribe({
-        next: () => {
+        next: (res) => {
           this.success = 'Your credit application has been submitted successfully. Our team will review it shortly.';
+          this.mlPrediction = res.mlPrediction;
           this.form.reset({ repaymentType: 'MENSUALITE_CONSTANTE' as RepaymentType, dependents: 0, isFeePaid: false });
           this.cdr.markForCheck();
         },

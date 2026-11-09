@@ -1,6 +1,7 @@
 package com.kredia.entity.user;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -149,6 +150,7 @@ public class User {
     public int getFailedLoginAttempts() { return failedLoginAttempts; }
     public void setFailedLoginAttempts(int failedLoginAttempts) { this.failedLoginAttempts = failedLoginAttempts; }
 
+    @JsonIgnore
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
@@ -161,6 +163,7 @@ public class User {
     public Gender getGender() { return gender; }
     public void setGender(Gender gender) { this.gender = gender; }
 
+    @JsonIgnore
     public String getVerificationToken() { return verificationToken; }
     public void setVerificationToken(String verificationToken) { this.verificationToken = verificationToken; }
 }

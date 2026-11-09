@@ -1,0 +1,81 @@
+<div class="login-wrapper">
+
+  <a routerLink="/" class="btn-back-landing">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <line x1="19" y1="12" x2="5" y2="12"></line>
+      <polyline points="12 19 5 12 12 5"></polyline>
+    </svg>
+    Return to Landing Page
+  </a>
+
+  <div class="login-card">
+
+    <div class="login-brand">
+      <div class="brand-icon">
+        <img src="/assets/kredia-logo.png" alt="Kredia" />
+      </div>
+      <h1 class="brand-name">KREDIA</h1>
+    </div>
+
+    <p class="login-subtitle">Create your account</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="login-form">
+
+      <div class="alert error" *ngIf="error">⚠️ {{ error }}</div>
+      <div class="alert success" *ngIf="success">✅ {{ success }}</div>
+
+      <div class="field">
+        <label for="firstName">First name</label>
+        <input id="firstName" type="text" formControlName="firstName" placeholder="John" />
+        <small *ngIf="form.controls.firstName.touched && form.controls.firstName.invalid">
+          First name required.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="lastName">Last name</label>
+        <input id="lastName" type="text" formControlName="lastName" placeholder="Doe" />
+        <small *ngIf="form.controls.lastName.touched && form.controls.lastName.invalid">
+          Last name required.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="phoneNumber">Phone number</label>
+        <input id="phoneNumber" type="tel" formControlName="phoneNumber" placeholder="+216..." />
+        <small *ngIf="form.controls.phoneNumber.touched && form.controls.phoneNumber.invalid">
+          Phone number required.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="email">Email address</label>
+        <input id="email" type="email" formControlName="email" placeholder="you@example.com" autocomplete="email" />
+        <small *ngIf="form.controls.email.touched && form.controls.email.invalid">
+          Valid email required.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" formControlName="password" placeholder="••••••••" autocomplete="new-password" />
+        <small *ngIf="form.controls.password.touched && form.controls.password.invalid">
+          Password required (min. 6 characters).
+        </small>
+      </div>
+
+      <button type="submit" class="btn-login" [disabled]="loading">
+        <span *ngIf="!loading">Create account</span>
+        <span *ngIf="loading" class="spinner-wrap">
+          <span class="spinner"></span> Creating...
+        </span>
+      </button>
+
+      <p class="register-link">
+        Already have an account? <a routerLink="/login">Sign in</a>
+      </p>
+
+    </form>
+
+  </div>
+</div>

@@ -147,4 +147,24 @@ public class TransactionService {
     public List<Transaction> getAllTransactions() {
         return transactionRepository.findAll();
     }
+
+    public List<Transaction> getTransactionsByUser(Long userId) {
+        return transactionRepository.findBySourceWallet_User_IdOrDestinationWallet_User_Id(userId, userId);
+    }
+
+    /**
+     * Creates a transaction on behalf of a client: the source wallet must belong to that client.
+     */
+    public Transaction createTransactionForClient(Transaction transaction, Long userId) {
+        if (transaction.getSourceWallet() == null || transaction.getSourceWallet().getWalletId() == null) {
+            throw new IllegalArgumentException("Source wallet must be provided");
+        }
+        Wallet sourceWallet = walletRepository.findById(transaction.getSourceWallet().getWalletId())
+                .orElseThrow(() -> new RuntimeException("Source wallet not found"));
+        if (sourceWallet.getUser() == null || !userId.equals(sourceWallet.getUser().getUserId())) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Source wallet does not belong to the current user");
+        }
+        return createTransaction(transaction);
+    }
 }

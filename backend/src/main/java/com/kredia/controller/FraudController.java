@@ -6,6 +6,7 @@ import com.kredia.service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,11 +25,13 @@ public class FraudController {
         this.transactionService = transactionService;
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     @GetMapping("/suspected")
     public ResponseEntity<List<Transaction>> getSuspectedTransactions() {
         List<Transaction> suspected = fraudDetectionService.getSuspectedTransactions();
         return new ResponseEntity<>(suspected, HttpStatus.OK);
     }
+    @PreAuthorize("hasAnyRole('ADMIN','AGENT')")
     @PostMapping("/analyze-transaction/{transactionId}")
     public ResponseEntity<?> analyzeTransactionWithAI(@PathVariable Long transactionId) {
         return transactionService.getTransaction(transactionId).map(transaction -> {

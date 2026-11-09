@@ -2,17 +2,26 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, timeout } from 'rxjs';
 import { API_BASE_URL } from '../../../../core/http/api.config';
-import { Credit, DemandeCredit, DefaultPredictionResponse } from '../models/credit.model';
+import { Credit, DemandeCredit, DefaultPredictionResponse, ApplicationPredictionResponse, CreateDemandeResponse } from '../models/credit.model';
 
 @Injectable({ providedIn: 'root' })
 export class CreditApi {
   constructor(private readonly http: HttpClient) {}
 
-  /** Submit a credit application (client) */
-  createDemande(demande: DemandeCredit): Observable<DemandeCredit> {
+  /** Submit a credit application — returns demande + ML prediction */
+  createDemande(demande: DemandeCredit): Observable<CreateDemandeResponse> {
     return this.http
-      .post<DemandeCredit>(`${API_BASE_URL}/api/credits`, demande)
-      .pipe(timeout(10000));
+      .post<CreateDemandeResponse>(`${API_BASE_URL}/api/credits`, demande)
+      .pipe(timeout(15000));
+  }
+
+  /** Re-run ML application prediction on an existing demande (admin) */
+  predictApplication(demandeId: number): Observable<ApplicationPredictionResponse> {
+    return this.http
+      .post<ApplicationPredictionResponse>(
+        `${API_BASE_URL}/api/credits/demandes/${demandeId}/predict-application`, {}
+      )
+      .pipe(timeout(15000));
   }
 
   /** @deprecated Use createDemande instead */

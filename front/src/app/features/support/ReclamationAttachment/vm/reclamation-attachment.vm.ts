@@ -7,15 +7,11 @@ import { ReclamationAttachment } from '../models/reclamation-attachment.model';
 export class ReclamationAttachmentVm {
   private readonly api = inject(ReclamationAttachmentApi);
 
-  findAll(): Observable<ReclamationAttachment[]> {
-    return this.api.findAll();
+  getByReclamation(reclamationId: number): Observable<ReclamationAttachment[]> {
+    return this.api.getByReclamation(reclamationId);
   }
 
-  findByReclamation(reclamationId: number): Observable<ReclamationAttachment[]> {
-    return this.api.findByReclamation(reclamationId);
-  }
-
-  delete(id: number): Observable<void> {
-    return this.api.delete(id);
+  upload(reclamationId: number, file: File): Observable<ReclamationAttachment> {
+    return this.api.upload(reclamationId, file);
   }
 }

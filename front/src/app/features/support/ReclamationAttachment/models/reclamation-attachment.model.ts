@@ -1,8 +1,10 @@
 export interface ReclamationAttachment {
-  id: number;
-  reclamationId: number;
-  url: string;
-  name: string;
-  type: string;
-  size: number;
+  attachmentId?: number;
+  reclamationId?: number;
+  fileName: string;
+  fileUrl: string;
+  contentType?: string;
+  sizeBytes?: number;
+  uploadedByUserId?: number;
+  uploadedAt?: string;
 }

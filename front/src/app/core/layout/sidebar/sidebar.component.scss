@@ -166,6 +166,15 @@
   transition: opacity 0.15s ease;
 }
 
+/* Keep sub-menu icons in sync with the active menu item color */
+.sub li a.active .sub-icon [stroke] {
+  stroke: var(--emerald-600);
+}
+
+.sub li a.active .sub-icon [fill]:not([fill="none"]) {
+  fill: var(--emerald-600);
+}
+
 .sub-emoji {
   font-size: 14px;
   flex-shrink: 0;
@@ -274,4 +283,18 @@
 .sign-out:hover {
   background: rgba(229, 62, 62, 0.15);
   color: #feb2b2;
+}
+
+/* Off-canvas navigation on compact screens */
+@media (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 0 24px 48px rgba(2, 6, 23, 0.35);
+    z-index: 120;
+  }
+
+  :host(.sidebar-open) .sidebar {
+    transform: translateX(0);
+  }
 }

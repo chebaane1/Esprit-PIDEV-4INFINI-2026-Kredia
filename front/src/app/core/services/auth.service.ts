@@ -9,6 +9,14 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+}
+
 // Typage explicite — correspond à { success, data: { token }, timestamp }
 export interface LoginResponse {
   success?: boolean;
@@ -48,6 +56,13 @@ export class AuthService {
     return this.http.post<LoginResponse>(
       `${API_BASE_URL}/api/auth/login`,
       credentials
+    );
+  }
+
+  register(payload: RegisterRequest): Observable<any> {
+    return this.http.post<any>(
+      `${API_BASE_URL}/api/auth/register`,
+      payload
     );
   }
 

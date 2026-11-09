@@ -41,3 +41,18 @@ export interface DefaultPredictionResponse {
   recommendation: string;
 }
 
+/** ML prediction at application submission time (status=0/1) */
+export interface ApplicationPredictionResponse {
+  demande_id: number | null;
+  status: 0 | 1;               // 0 = can repay, 1 = default risk
+  default_probability: number; // 0.0 → 1.0
+  eligibility_score: number;   // 1 - default_probability
+  risk_level: 'LOW' | 'MEDIUM' | 'HIGH';
+  recommendation: string;
+}
+
+/** Wrapper returned by POST /api/credits */
+export interface CreateDemandeResponse {
+  demande: DemandeCredit;
+  mlPrediction: ApplicationPredictionResponse | null;
+}

@@ -52,6 +52,64 @@
           <div class="alert error"   *ngIf="error">{{ error }}</div>
         </div>
 
+        <!-- ── ML Prediction Result Card ──────────────────────────── -->
+        <div class="ml-prediction-card" *ngIf="mlPrediction && !auth.isClient()"
+             [class.ml-prediction-card--eligible]="mlPrediction.status === 0"
+             [class.ml-prediction-card--risk]="mlPrediction.status === 1">
+
+          <div class="ml-prediction-card__header">
+            <div class="ml-prediction-card__icon">
+              <span *ngIf="mlPrediction.status === 0">🤖✅</span>
+              <span *ngIf="mlPrediction.status === 1">🤖⚠️</span>
+            </div>
+            <div class="ml-prediction-card__title-group">
+              <h3 class="ml-prediction-card__title">AI Credit Assessment</h3>
+              <span class="ml-prediction-card__verdict"
+                    [class.verdict--ok]="mlPrediction.status === 0"
+                    [class.verdict--risk]="mlPrediction.status === 1">
+                {{ mlPrediction.status === 0 ? 'Eligible — Can Repay' : 'Risk Detected — Review Required' }}
+              </span>
+            </div>
+            <span class="ml-risk-badge"
+                  [class.ml-risk-badge--low]="mlPrediction.risk_level === 'LOW'"
+                  [class.ml-risk-badge--medium]="mlPrediction.risk_level === 'MEDIUM'"
+                  [class.ml-risk-badge--high]="mlPrediction.risk_level === 'HIGH'">
+              {{ mlPrediction.risk_level }}
+            </span>
+          </div>
+
+          <div class="ml-prediction-card__body">
+            <div class="ml-score-row">
+              <div class="ml-score-item">
+                <span class="ml-score-label">Eligibility Score</span>
+                <div class="ml-score-bar-wrap">
+                  <div class="ml-score-bar"
+                       [style.width.%]="mlPrediction.eligibility_score * 100"
+                       [class.bar--green]="mlPrediction.status === 0"
+                       [class.bar--red]="mlPrediction.status === 1"></div>
+                </div>
+                <span class="ml-score-value">{{ (mlPrediction.eligibility_score * 100).toFixed(1) }}%</span>
+              </div>
+              <div class="ml-score-item">
+                <span class="ml-score-label">Default Probability</span>
+                <div class="ml-score-bar-wrap">
+                  <div class="ml-score-bar ml-score-bar--default"
+                       [style.width.%]="mlPrediction.default_probability * 100"
+                       [class.bar--green]="mlPrediction.default_probability < 0.3"
+                       [class.bar--orange]="mlPrediction.default_probability >= 0.3 && mlPrediction.default_probability < 0.6"
+                       [class.bar--red]="mlPrediction.default_probability >= 0.6"></div>
+                </div>
+                <span class="ml-score-value">{{ (mlPrediction.default_probability * 100).toFixed(1) }}%</span>
+              </div>
+            </div>
+            <p class="ml-recommendation">
+              <span class="ml-recommendation__icon">💡</span>
+              {{ mlPrediction.recommendation }}
+            </p>
+            <p class="ml-disclaimer">This AI assessment is informational. Final decision is made by our lending team.</p>
+          </div>
+        </div>
+
     <div class="grid">
       <!-- Amount -->
       <div class="form-field-card amount-theme">

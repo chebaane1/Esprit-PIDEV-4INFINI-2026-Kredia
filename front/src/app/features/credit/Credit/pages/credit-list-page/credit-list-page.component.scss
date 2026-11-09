@@ -750,3 +750,62 @@
     color: #4338ca;
   }
 }
+/* -- ML Mini Badge (admin PENDING table) ------------------- */
+.ml-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+
+  &--ok {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+    &__icon { font-size: 0.8rem; }
+  }
+
+  &--risk {
+    background: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #fed7aa;
+  }
+
+  &__label { font-weight: 900; }
+}
+
+.ml-mini-score {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.btn--ml-scan {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
